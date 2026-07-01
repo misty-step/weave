@@ -9,3 +9,8 @@ Pieces: [bitterblossom](https://github.com/misty-step/bitterblossom) ·
 [harness-kit](https://github.com/misty-step/harness-kit)
 
 Status: pre-composition. The pieces are being hardened standalone; the loop is the spec.
+
+Current Weave specs:
+
+- [Remote and review primitives](docs/remote-and-review-primitives.md)
+- [Composition contracts](docs/composition-contracts.md)
