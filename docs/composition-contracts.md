@@ -84,6 +84,9 @@ the same data must be present unless explicitly waived in that schema.
 
 The following live repos already have pieces of the versioned contract posture:
 
+- Weave now drafts `weave.remote_event.v1` as
+  `docs/schemas/weave.remote_event.v1.schema.json`, with GitHub and
+  Forgejo/Gitea pull-request fixtures under `docs/fixtures/contracts/`.
 - Cerberus owns `cerberus.review_request.v1`, `cerberus.review_artifact.v1`,
   receipt bundle, producer manifest, and post plan/result shapes.
 - Crucible owns `crucible.eval_spec.v1`, labels, calibration records, run
