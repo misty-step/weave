@@ -63,3 +63,7 @@ if [ ! -d "$CACHE_DIR/node_modules/ajv" ]; then
 fi
 
 NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/validate-contracts.cjs" "$ROOT"
+
+# --- Consumer conformance kit ------------------------------------------------
+echo "==> Running consumer conformance kit"
+NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/consumer-conformance-kit.cjs" "$ROOT"

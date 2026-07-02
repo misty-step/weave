@@ -22,5 +22,6 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [Remote event schema](docs/schemas/weave.remote_event.v1.schema.json) — host-neutral event envelope.
 - [Work item proposal schema](docs/schemas/weave.work_item_proposal.v1.schema.json) — triage→Powder proposal envelope.
 - [Schema changelog](docs/schema-changelog.md) — version history for Weave-owned contracts.
+- [Consumer conformance kit](docs/consumer-conformance-kit.md) — runnable starting point for consumer-side contract tests.
 
 New here? Start with [onboarding](docs/onboarding.md). Contributing? Read [CONTRIBUTING.md](CONTRIBUTING.md).
