@@ -187,10 +187,12 @@ main path:
 
 - **Doc-sync agent** — runs the harness-kit document skill with an affordable
   model on PR merge or daily, per managed repo. Finds doc drift, opens PRs.
-  First instance of the harness-kit-skill → focused-bespoke-agent pattern.
+  First instance of the harness-kit-skill → focused-bespoke-agent pattern. See
+  [doc-sync flow](doc-sync-flow.md).
 - **CI/quality-gate auditor** — audits each repo's CI design, gates, tests,
   linter, build. Proposes enforcement increases, speedups, cost cuts via PRs.
-  Never lowers gates (doctrine).
+  Never lowers gates (doctrine). See
+  [CI-auditor flow](ci-auditor-flow.md).
 
 Both emit `bb.maintenance_result.v1` — a result can open a PR, request input,
 or complete a Powder card with proof, using one schema.
