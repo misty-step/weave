@@ -1,6 +1,6 @@
 # Doc-sync agent: every repo's docs world-class and accurate, on a loop
 
-Priority: P2 · Status: pending · Estimate: M
+Priority: P2 · Status: draft · Estimate: M
 
 ## Goal
 A BB-triggered agent (on PR merge or daily, per managed repo) that runs the harness-kit document skill with an affordable model and keeps documentation synced to reality.
@@ -12,3 +12,8 @@ A BB-triggered agent (on PR merge or daily, per managed repo) that runs the harn
 
 ## Notes
 First instance of the harness-kit-skill -> focused-bespoke-agent pattern. Cheap model; frontier not required.
+
+2026-07-02 overnight lane: spec drafted in `docs/doc-sync-flow.md`. Trigger,
+flow, contracts (`harness.skill_bundle_manifest.v1`, `bb.maintenance_result.v1`),
+model choice, budget, and acceptance oracle are specified. Remaining: trigger +
+agent implemented in BB.
