@@ -154,3 +154,8 @@ This draft satisfies the first contract-design slice when:
   tailnet-only details;
 - every seam names the consumer-side contract test that would fail on a breaking
   field rename.
+
+The Weave-owned schema (`weave.remote_event.v1`) is exercised by
+`./scripts/verify.sh`, which validates valid fixtures (must pass) and invalid
+fixtures (missing `schema_version`, unknown major — must be rejected) against
+the schema. Piece-owned schemas are validated in their producer repos.

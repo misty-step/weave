@@ -47,9 +47,12 @@ that piece's repo — the Weave only references it in
 4. **Update the seam reference.** If the seam is new or changed, add or update
    the card in [docs/seam-reference.md](docs/seam-reference.md) and the row in
    [docs/composition-contracts.md](docs/composition-contracts.md).
-5. **Validate.** Run `./scripts/verify.sh` (once it exists) or validate fixtures
-   against the schema manually. A breaking change (field rename, type change,
-   removed required field) requires a new major version.
+5. **Validate.** Run `./scripts/verify.sh` — it checks JSON well-formedness,
+   scans fixtures for forbidden content (secrets, local paths, tailnet
+   hostnames), and validates every fixture against its schema (valid fixtures
+   must pass; invalid-marker fixtures must be rejected). A breaking change
+   (field rename, type change, removed required field) requires a new major
+   version.
 6. **Open a PR.** One coherent slice per PR. Link the backlog ticket in the PR
    body.
 
