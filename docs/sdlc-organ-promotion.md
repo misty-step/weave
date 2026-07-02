@@ -130,7 +130,7 @@ bar is only real if the reference organ can be measured against it, including
 where it fails.
 
 Evidence source: `~/.factory-lanes/groom/cerberus.md` (salvage groom report,
-2026-07-01), citing the Daedalus arena run `20260623T183514Z` and the
+2026-07-01), citing the Threshold arena run `20260623T183514Z` and the
 Crucible round-trip delivered 2026-06-30.
 
 | Gate | Cerberus evidence | Verdict |
