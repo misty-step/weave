@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/misty-step/weave/blob/master/docs/schemas/weave.remote_event.v1.schema.json",
+  "title": "Weave Remote Event v1",
+  "description": "Host-neutral event envelope for remote code/work hosts. GitHub, GitLab, Forgejo/Gitea, Gerrit, and future adapters normalize native webhooks into this contract before BB, Cerberus, Landmark, or Canary consume them.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "producer",
+    "produced_at",
+    "occurred_at",
+    "correlation_id",
+    "source",
+    "subject",
+    "actor",
+    "action",
+    "idempotency_key",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "weave.remote_event.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Adapter-generated event id. Stable for one normalized event record."
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "produced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Best host/native event timestamp. If the host has no event timestamp, use the adapter receipt time and preserve that fact in payload."
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind",
+        "external_id"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "github",
+            "gitlab",
+            "forgejo",
+            "gitea",
+            "gerrit",
+            "powder",
+            "canary",
+            "bb",
+            "cerberus",
+            "crucible",
+            "threshold",
+            "landmark",
+            "harness-kit"
+          ]
+        },
+        "external_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "repo",
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^[^/]+/[^/]+$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "pull_request",
+            "change",
+            "card",
+            "incident",
+            "run",
+            "release",
+            "benchmark",
+            "agent_config"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "id",
+        "login"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "login": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "bot",
+            "app",
+            "system",
+            "unknown"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Normalized action within the subject kind, for example opened, synchronized, closed, labeled, check_completed, deployed, or released."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable dedupe key chosen by the adapter from host delivery id plus subject/action revision."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Adapter-owned normalized details. It may retain selected native ids, labels, refs, SHAs, or check names, but must not carry secrets, private local paths, or tailnet-only hostnames."
+    }
+  },
+  "additionalProperties": false
+}
