@@ -136,7 +136,7 @@ referencing a non-existent bundle version fails.
 **Schemas:** `crucible.eval_spec.v1`, `crucible.run_report.v1`,
 `crucible.harbor_eval_export.v1`
 **Owner:** crucible
-**Consumer:** threshold / Daedalus Harbor runner
+**Consumer:** threshold Harbor runner
 **Status:** partly existing
 
 Threshold scores a Crucible-authored Harbor export without importing Crucible

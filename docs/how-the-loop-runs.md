@@ -133,7 +133,7 @@ is already contracted:
 | Direction | Schema | Producer | Consumer |
 | --- | --- | --- | --- |
 | Cerberus → Crucible (receipt bundle) | `cerberus.review_receipt_bundle.v1`, `cerberus.crucible_producer_manifest.v1` | Cerberus | Crucible |
-| Crucible → Threshold (eval/run) | `crucible.eval_spec.v1`, `crucible.run_report.v1`, `crucible.harbor_eval_export.v1` | Crucible | Threshold/Daedalus |
+| Crucible → Threshold (eval/run) | `crucible.eval_spec.v1`, `crucible.run_report.v1`, `crucible.harbor_eval_export.v1` | Crucible | Threshold |
 | Threshold → BB (config recommendation) | `threshold.agent_config_recommendation.v1` | Threshold | BB agent/workload registry |
 
 The promotion bar (Gate 1) requires a mean reward whose 95% CI excludes zero,
