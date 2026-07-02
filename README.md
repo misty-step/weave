@@ -21,5 +21,6 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [CI-auditor flow](docs/ci-auditor-flow.md) — the gate-improvement maintenance loop (backlog 006).
 - [Remote event schema](docs/schemas/weave.remote_event.v1.schema.json) — host-neutral event envelope.
 - [Work item proposal schema](docs/schemas/weave.work_item_proposal.v1.schema.json) — triage→Powder proposal envelope.
+- [Schema changelog](docs/schema-changelog.md) — version history for Weave-owned contracts.
 
 New here? Start with [onboarding](docs/onboarding.md). Contributing? Read [CONTRIBUTING.md](CONTRIBUTING.md).
