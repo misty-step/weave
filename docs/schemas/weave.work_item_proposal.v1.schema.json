@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/misty-step/weave/blob/master/docs/schemas/weave.work_item_proposal.v1.schema.json",
+  "title": "Weave Work Item Proposal v1",
+  "description": "A triage result (Canary incident, BB triage workload) proposes a Powder card. A proposal enters the pile — it does not bypass Powder's card lifecycle rules. No proposal may carry status: in_progress; proposals open in backlog.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "producer",
+    "produced_at",
+    "correlation_id",
+    "source",
+    "subject",
+    "idempotency_key",
+    "proposed_card",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "weave.work_item_proposal.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable proposal id."
+    },
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "produced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind", "external_id"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["canary", "bb", "cerberus", "crucible"]
+        },
+        "external_id": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": false
+    },
+    "subject": {
+      "type": "object",
+      "required": ["repo", "kind", "id"],
+      "properties": {
+        "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "kind": {
+          "type": "string",
+          "enum": ["incident", "run", "card", "pull_request"]
+        },
+        "id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable dedupe key. Powder rejects duplicate proposals with the same key."
+    },
+    "proposed_card": {
+      "type": "object",
+      "required": ["title", "priority"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "description_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "URL or stable ref to the full description/context, not inline prose."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["P1", "P2", "P3"]
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed"],
+      "description": "A proposal always enters the pile as 'proposed'. Status 'in_progress' or any active-queue state is rejected — proposals do not bypass the pile."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Optional adapter-owned context. Must not carry secrets, private local paths, or tailnet-only hostnames."
+    }
+  },
+  "additionalProperties": false
+}

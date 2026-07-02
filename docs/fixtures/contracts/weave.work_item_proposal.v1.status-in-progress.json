@@ -1,0 +1,28 @@
+{
+  "schema_version": "weave.work_item_proposal.v1",
+  "id": "proposal_bb_triage_5001",
+  "producer": {
+    "name": "bb-triage-workload",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-01T03:00:00Z",
+  "correlation_id": "bb:misty-step/cerberus:run:5001:triage",
+  "source": {
+    "kind": "bb",
+    "external_id": "run-5001"
+  },
+  "subject": {
+    "repo": "misty-step/cerberus",
+    "kind": "run",
+    "id": "5001"
+  },
+  "idempotency_key": "bb:run-5001:proposal:reviewer-consistency",
+  "proposed_card": {
+    "title": "Reviewer consistency: investigate pass^k regression",
+    "description_ref": "https://github.com/misty-step/cerberus/issues/120",
+    "priority": "P1",
+    "labels": ["consistency", "crucible"]
+  },
+  "status": "in_progress",
+  "payload": {}
+}
