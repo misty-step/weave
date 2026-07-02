@@ -4,9 +4,11 @@
 
 In the Forgotten Realms, the Weave is the underlying structure that makes magic usable:
 raw power, made safe and castable. This repo is that layer for the Misty Step toolchain.
-Each tool below is built first as a tool for ourselves, standalone and composable
-(one core → API + CLI + MCP + SDK + skill + thin UI). The Weave stitches them into one
-opinionated software-development loop. Ship with our defaults; bring your own pieces later.
+Each tool below is built first as a tool for ourselves, standalone and composable —
+a functional core wearing five faces: agent skill, CLI, API, MCP, UI — each an
+independent access path, with the API as the spine (docs/the-five-faces.md is the law;
+SDK is the optional sixth face). The Weave stitches them into one opinionated
+software-development loop. Ship with our defaults; bring your own pieces later.
 
 ## The Loop
 
