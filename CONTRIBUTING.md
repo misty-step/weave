@@ -42,8 +42,12 @@ that piece's repo — the Weave only references it in
 2. **Draft the schema.** Use JSON Schema draft 2020-12. Every payload carries
    `schema_version` in the form `<owner>.<noun>.v<major>`.
 3. **Add fixtures.** At minimum one valid fixture under
-   `docs/fixtures/contracts/`. Add invalid fixtures for the cases consumers
-   must reject (missing `schema_version`, unknown major version).
+   `docs/fixtures/contracts/`, named `<schema_version>.<case>.json`. Add
+   invalid fixtures using a marker token in the filename
+   (`missing-schema-version`, `unknown-major`, `status-in-progress`) — the
+   validator treats any fixture whose name contains a marker as must-reject.
+   See [composition contracts](docs/composition-contracts.md#schema-registry-shape)
+   for the full layout.
 4. **Update the seam reference.** If the seam is new or changed, add or update
    the card in [docs/seam-reference.md](docs/seam-reference.md) and the row in
    [docs/composition-contracts.md](docs/composition-contracts.md).

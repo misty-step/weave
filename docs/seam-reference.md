@@ -288,21 +288,6 @@ proposals enter the pile, not the active queue.
 
 ## Schema registry shape
 
-Each producer repo exposes:
-
-```
-schemas/
-  <schema_version>.schema.json
-fixtures/
-  contracts/
-    valid/
-      <schema_version>-minimal.json
-      <schema_version>-full.json
-    invalid/
-      <schema_version>-missing-schema-version.json
-      <schema_version>-unknown-major.json
-```
-
-Each consumer keeps a small fixture set pinned from the producer release. A
-breaking field rename fails in CI because a consumer fixture no longer
-validates or deserializes.
+See [composition contracts](composition-contracts.md#schema-registry-shape) for
+the flat fixture layout and the `INVALID_MARKERS` convention that
+`scripts/validate-contracts.cjs` implements.

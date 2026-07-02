@@ -124,24 +124,35 @@ The following live repos already have pieces of the versioned contract posture:
 
 ## Schema registry shape
 
-Each producer repo should eventually expose:
+Each producer repo exposes schema files and contract fixtures in a flat
+layout:
 
 ```text
-schemas/
-  <schema_version>.schema.json
-fixtures/
-  contracts/
-    valid/
-      <schema_version>-minimal.json
-      <schema_version>-full.json
-    invalid/
-      <schema_version>-missing-schema-version.json
-      <schema_version>-unknown-major.json
+docs/
+  schemas/
+    <schema_version>.schema.json
+  fixtures/
+    contracts/
+      <schema_version>.<case>.json
 ```
 
-Each consumer should keep a small fixture set copied or pinned from the producer
-release. A breaking field rename should fail in CI because a consumer fixture no
-longer validates or deserializes.
+Fixture validity is determined by a marker token in the filename, not by
+directory. `scripts/validate-contracts.cjs` matches the `schema_version`
+prefix (everything up to the first `.`) to find the schema, then treats a
+fixture as invalid (must be rejected by the schema) if its filename contains
+any of these markers:
+
+- `missing-schema-version` — omits the `schema_version` field.
+- `unknown-major` — sets `schema_version` to an unsupported major (e.g. `v2`).
+- `status-in-progress` — carries a `status` value the schema rejects.
+
+All other fixtures matching the prefix are valid (must pass). Add a new
+invalid case by adding the marker to `INVALID_MARKERS` and creating the
+fixture file — no directory restructuring needed.
+
+Each consumer keeps a small fixture set pinned from the producer release. A
+breaking field rename fails in CI because a consumer fixture no longer
+validates or deserializes.
 
 ## Acceptance oracle for backlog 001
 
