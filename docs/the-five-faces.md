@@ -51,17 +51,27 @@ Rules of construction:
 From the showcase evidence pass (cold demos, `a/showcase/`). ✓ proven · ◐ partial ·
 ✗ missing · ? unverified this pass.
 
-| Tool | Core | API | CLI | MCP | UI | Skill |
+All `?` cells resolved by the 2026-07-02 fleet assessment (`~/.factory-lanes/assess/`).
+Skill column reads: in-repo / in harness-kit catalog — the split is the finding.
+
+| Tool | Core | API | CLI | MCP | UI | Skill (repo / catalog) |
 |------|------|-----|-----|-----|----|----|
-| bitterblossom | ✓ | ✓ `bb serve` | ✓ `bb` | ✓ `bb mcp serve` (read-only) | ✓ operator.html | ? |
-| powder | ✓ | ✓ | ✓ | ✓ 15 tools | ✗ (backlog 006, Kanban) | ✓ SKILL.md |
-| crucible | ✓ | ◐ adjudication server only | ✓ | ✓ | ◐ adjudication panel only | ? |
-| cerberus | ✓ | ✗ (no HTTP surface) | ✓ | ✓ | ✗ | ? |
-| landmark | ✓ | ✗ (CLI links core — named exception?) | ✓ + GH Action | ✗ | ✗ | ? |
-| canary | ✓ | ✓ API-first + OpenAPI (+TS SDK) | ✓ | ? | ✗ (was "by design" — now a gap) | ? |
-| bastion | ✓ | ◐ healthz + per-app | ✓ `bastion status` | ✓ via cairn | ✓ via cairn | ? |
-| harness-kit | ✓ | exception (ratified 07-02) | ✓ | experiment candidate | ◐ bare docs site | ✓ (it ships skills) |
+| bitterblossom | ✓ | ✓ `bb serve` | ✓ `bb` | ✓ 9 tools, read-only by construction | ✓ noir-ledger (accepted 07-02) | ◐ / ✗ |
+| powder | ✓ | ✓ | ✓ | ✓ 15 tools | ✗ (backlog 006, Kanban) | ✓ / ✗ |
+| crucible | ✓ | ◐ adjudication server only | ✓ | ✓ 8 tools | ◐ adjudication panel only | ✓ / ✗ |
+| cerberus | ✓ | ✗ exception candidate (rule 2 memo owed) | ✓ | ✓ 3 tools | ✗ | ✓ (×2) / ✗ |
+| landmark | ✓ | ✗ named exception — RATIFIED 07-02 (rule 2's worked example) | ✓ + GH Action | ✗ (experiment later, after 007/010) | ✗ | ✗ / ✗ |
+| canary | ✓ | ✓ API-first + OpenAPI (+TS SDK) | ✓ | ✓ (052/057, mcp_stdio.rs) | ✗ gap (thesis revisit w/ operator) | ◐ name-drop / ✗ |
+| bastion | ✓ | ◐ healthz + per-app | ✓ `bastion status` | ✓ via cairn | ✓ via cairn | ✗ / ✗ |
+| harness-kit | ✓ | exception (ratified 07-02) | ✓ | experiment candidate (ticket owed) | ◐ bare docs site | ✓ (it ships skills) |
+| aesthetic | ✓ CSS kit v2.8.1 | kit exception: SDK (law/) + JSON feed instead | n/a | n/a | ✓ (site/) | ✗ / ✗ |
+| threshold | ✓ | law deferred until graduation (its 066) | ✓ only face | ✗ | ✗ | ✗ / ✗ |
 | weave organs (gazette, showcase) | ◐ scripts | ✗ | ◐ | ✗ | ✓ (they ARE pages) | ✗ |
+
+**The skill-column verdict (hk lane, 07-02): zero real per-tool skills in the catalog
+for any fleet tool.** Tools carry their own SKILL.md in-repo; the distribution layer
+distributes none of them. First children of the adoption epic: author bb + landmark
+catalog skills.
 
 Honest readings:
 
@@ -86,6 +96,11 @@ Exceptions are argued per-repo and recorded here — never defaulted into.
   filesystem and CLI don't already. Its faces are: skill (it *ships* skills), CLI
   (bootstrap/checks), UI (the docs site — still owed polish), and MCP as an
   **experiment, not an obligation** — see below.
+
+- **landmark: no API — ratified 2026-07-02.** Rule 2's own worked example promoted to
+  a recorded exception: a no-server CLI whose core links directly; the composite GH
+  Action is its service face. MCP (release-notes-on-demand) stays a later experiment,
+  sequenced after its 007/010 action-thinning work.
 
 ### The harness-kit MCP experiment
 
