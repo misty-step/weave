@@ -1,6 +1,6 @@
 # Fix stale "one contract fully specified today" claims
 
-Priority: P2 · Status: ready · Estimate: S
+Priority: P2 · Status: done · Estimate: S
 
 ## Goal
 `docs/onboarding.md` (§6 heading + body), `docs/how-the-loop-runs.md` (closing
