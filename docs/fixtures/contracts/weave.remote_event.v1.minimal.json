@@ -1,0 +1,27 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_minimal_0001",
+  "producer": {
+    "name": "test-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-01T00:00:00Z",
+  "occurred_at": "2026-07-01T00:00:00Z",
+  "correlation_id": "test:owner/repo:pull_request:1:opened",
+  "source": {
+    "kind": "github",
+    "external_id": "delivery-1"
+  },
+  "subject": {
+    "repo": "owner/repo",
+    "kind": "pull_request",
+    "id": "1"
+  },
+  "actor": {
+    "id": "user-1",
+    "login": "tester"
+  },
+  "action": "opened",
+  "idempotency_key": "test:delivery-1:pull_request:1:opened",
+  "payload": {}
+}

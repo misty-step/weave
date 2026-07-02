@@ -1,0 +1,25 @@
+{
+  "schema_version": "weave.work_item_proposal.v1",
+  "id": "proposal_minimal_0001",
+  "producer": {
+    "name": "test-triage",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-01T00:00:00Z",
+  "correlation_id": "test:owner/repo:incident:1:triage",
+  "source": {
+    "kind": "canary",
+    "external_id": "incident-1"
+  },
+  "subject": {
+    "repo": "owner/repo",
+    "kind": "incident",
+    "id": "1"
+  },
+  "idempotency_key": "test:incident-1:proposal:minimal",
+  "proposed_card": {
+    "title": "Minimal proposal fixture",
+    "priority": "P3"
+  },
+  "status": "proposed"
+}

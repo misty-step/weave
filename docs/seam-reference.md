@@ -29,7 +29,7 @@ Required fields: `schema_version`, `id`, `producer`, `produced_at`,
 `payload`.
 
 Fixtures: `docs/fixtures/contracts/weave.remote_event.v1.github-pr-opened.json`,
-`weave.remote_event.v1.forgejo-pr-opened.json`.
+`weave.remote_event.v1.forgejo-pr-opened.json`, `weave.remote_event.v1.minimal.json`.
 
 **Contract test:** a GitHub PR-open fixture and a Forgejo/Gitea fixture
 normalize to the same contract and trigger the same dry-run BB decision.
@@ -276,7 +276,8 @@ The `status` enum is `proposed` only — a proposal with `status: in_progress`
 is rejected. Proposals enter the pile, not the active queue.
 
 Fixtures: `docs/fixtures/contracts/weave.work_item_proposal.v1.canary-incident.json`
-(valid), `weave.work_item_proposal.v1.missing-schema-version.json` (invalid),
+(valid), `weave.work_item_proposal.v1.minimal.json` (valid),
+`weave.work_item_proposal.v1.missing-schema-version.json` (invalid),
 `weave.work_item_proposal.v1.status-in-progress.json` (invalid),
 `weave.work_item_proposal.v1.unknown-major.json` (invalid).
 
