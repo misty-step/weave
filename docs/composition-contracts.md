@@ -81,15 +81,16 @@ the same data must be present unless explicitly waived in that schema.
 | Landmark release intelligence -> repos/Weave | Landmark | Consumer repo release workflow, Weave release ledger | `landmark.run_evidence.v1`, `landmark.release_kit.v1`, `landmark.synthesis_status.v1`, `landmark.release_entry.v1` | Existing in Landmark schemas | Consumer release workflow validates Landmark evidence before mutating release notes or feeds. |
 | Harness Kit skill/eval -> BB workloads | Harness Kit | BB workload definitions, doc-sync, CI-auditor | `harness.skill_bundle_manifest.v1`, `harness.skill_eval_result.v1` | New | BB refuses a skill-bound workload if the skill manifest has no version or declared eval evidence. |
 | BB doc-sync / CI-audit results -> Powder/remote host | Bitterblossom | Powder, remote host projection | `bb.maintenance_result.v1` | New | A doc-sync or CI-audit run can either open a PR, request input, or complete a Powder card with proof using one result schema. |
-| Canary/remote incidents -> Powder work proposals | Canary or BB triage workload | Powder | `weave.work_item_proposal.v1` | New | A triage result can propose a Powder card without bypassing Powder's card lifecycle rules. |
+| Canary/remote incidents -> Powder work proposals | Canary or BB triage workload | Powder | `weave.work_item_proposal.v1` | Specified | A triage result can propose a Powder card without bypassing Powder's card lifecycle rules. |
 
 ## Existing schema anchors
 
 The following live repos already have pieces of the versioned contract posture:
 
-- Weave now drafts `weave.remote_event.v1` as
-  `docs/schemas/weave.remote_event.v1.schema.json`, with GitHub and
-  Forgejo/Gitea pull-request fixtures under `docs/fixtures/contracts/`.
+- Weave owns `weave.remote_event.v1` (`docs/schemas/weave.remote_event.v1.schema.json`)
+  and `weave.work_item_proposal.v1` (`docs/schemas/weave.work_item_proposal.v1.schema.json`),
+  each with valid and invalid fixtures under `docs/fixtures/contracts/`,
+  exercised by `./scripts/verify.sh`.
 - Cerberus owns `cerberus.review_request.v1`, `cerberus.review_artifact.v1`,
   receipt bundle, producer manifest, and post plan/result shapes.
 - Crucible owns `crucible.eval_spec.v1`, labels, calibration records, run

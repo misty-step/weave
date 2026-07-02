@@ -261,12 +261,23 @@ is rejected.
 ## Canary / remote incidents → Powder work proposals
 
 **Schema:** `weave.work_item_proposal.v1`
-**Owner:** weave (or the triage workload that emits it)
+**Owner:** weave (`docs/schemas/weave.work_item_proposal.v1.schema.json`)
 **Consumer:** powder
-**Status:** new
+**Status:** specified; producer implementation pending
 
 A triage result proposes a Powder card without bypassing Powder's card
 lifecycle rules — a proposal does not skip the pile.
+
+Required fields: `schema_version`, `id`, `producer`, `produced_at`,
+`correlation_id`, `source` (`kind`, `external_id`), `subject` (`repo`, `kind`,
+`id`), `idempotency_key`, `proposed_card` (`title`, `priority`), `status`.
+
+The `status` enum is `proposed` only — a proposal with `status: in_progress`
+is rejected. Proposals enter the pile, not the active queue.
+
+Fixtures: `docs/fixtures/contracts/weave.work_item_proposal.v1.canary-incident.json`
+(valid), `weave.work_item_proposal.v1.missing-schema-version.json` (invalid),
+`weave.work_item_proposal.v1.status-in-progress.json` (invalid).
 
 **Contract test:** Powder accepts a proposal and applies card-lifecycle rules
 (opening in backlog). A proposal with `status: in_progress` is rejected —

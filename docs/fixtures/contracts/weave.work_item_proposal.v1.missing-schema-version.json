@@ -1,0 +1,24 @@
+{
+  "id": "proposal_canary_incident_4012_missing",
+  "producer": {
+    "name": "bb-triage-workload",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-01T02:14:00Z",
+  "correlation_id": "canary:misty-step/bitterblossom:incident:4012:triage",
+  "source": {
+    "kind": "canary",
+    "external_id": "incident-4012"
+  },
+  "subject": {
+    "repo": "misty-step/bitterblossom",
+    "kind": "incident",
+    "id": "4012"
+  },
+  "idempotency_key": "canary:incident-4012:proposal:missing-version",
+  "proposed_card": {
+    "title": "DLQ retry ergonomics",
+    "priority": "P2"
+  },
+  "status": "proposed"
+}
