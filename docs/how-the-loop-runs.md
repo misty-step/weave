@@ -176,9 +176,10 @@ before deciding triage; it does not act on the webhook alone.
 ## 8. Triage → back to the pile
 
 If a Canary incident or a triage result proposes new work, it emits a
-`weave.work_item_proposal.v1` to Powder. Powder applies its own card lifecycle
-rules — a proposal does not bypass the pile. The loop closes: incident →
-triage → card → enhancement → build → review → merge → deploy → (watch).
+`weave.work_item_proposal.v1` (see [the schema](schemas/weave.work_item_proposal.v1.schema.json))
+to Powder. Powder applies its own card lifecycle rules — a proposal does not
+bypass the pile. The loop closes: incident → triage → card → enhancement →
+build → review → merge → deploy → (watch).
 
 ## Maintenance loops
 
@@ -219,5 +220,7 @@ or complete a Powder card with proof, using one schema.
    minted (and why Cerberus is still advisory).
 5. [Remote and review primitives](remote-and-review-primitives.md) — the
    host/review research and recommendation.
-6. [The remote event schema](schemas/weave.remote_event.v1.schema.json) — the
-   one contract that is fully specified today.
+6. [The remote event schema](schemas/weave.remote_event.v1.schema.json) and
+   [the work item proposal schema](schemas/weave.work_item_proposal.v1.schema.json)
+   — the two Weave-owned contracts fully specified today. Fixtures in
+   [fixtures/contracts/](fixtures/contracts/).

@@ -53,12 +53,17 @@ source of truth, extract `weave.remote_event.v1` as the host-neutral envelope,
 adopt stacked PR discipline, pilot `jj` locally, mirror to Forgejo/Gitea
 before any source-of-truth migration.
 
-## 6. The one contract fully specified today
+## 6. Weave-owned contracts fully specified today
 
-Read [the remote event schema](schemas/weave.remote_event.v1.schema.json) and
-[the fixtures](fixtures/contracts/). This is the only seam with a complete
-schema and valid fixtures today — every other seam is specified but not yet
-implemented in its producer repo.
+Two Weave-owned schemas have complete definitions and fixtures:
+
+- [Remote event schema](schemas/weave.remote_event.v1.schema.json) — the
+  host-neutral event envelope. Fixtures in
+  [fixtures/contracts/](fixtures/contracts/).
+- [Work item proposal schema](schemas/weave.work_item_proposal.v1.schema.json)
+  — the triage→Powder proposal envelope. Fixtures in the same directory.
+
+Every other seam is specified but not yet implemented in its producer repo.
 
 ## 7. Contributing
 
