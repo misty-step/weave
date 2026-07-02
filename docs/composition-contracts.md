@@ -8,6 +8,9 @@ This document names the seams between the current Weave pieces. It is not an
 implementation schema registry yet. It is the contract map that tells each
 producer repo which schema it must own and which consumers must pin and test.
 
+Per-seam reference cards (owner repo, required fields, fixture expectations,
+contract-test oracle) live in [seam reference](seam-reference.md).
+
 ## Contract rules
 
 1. Every inter-piece payload MUST carry `schema_version`.
