@@ -34,7 +34,9 @@ Fixtures: `docs/fixtures/contracts/weave.remote_event.v1.github-pr-opened.json`,
 **Contract test:** a GitHub PR-open fixture and a Forgejo/Gitea fixture
 normalize to the same contract and trigger the same dry-run BB decision.
 Consumers reject events with `schema_version` ≠ `weave.remote_event.v1` and
-surface the unsupported version.
+surface the unsupported version. See the
+[consumer conformance kit](consumer-conformance-kit.md) for a runnable
+starting point.
 
 ---
 
@@ -283,7 +285,9 @@ Fixtures: `docs/fixtures/contracts/weave.work_item_proposal.v1.canary-incident.j
 
 **Contract test:** Powder accepts a proposal and applies card-lifecycle rules
 (opening in backlog). A proposal with `status: in_progress` is rejected —
-proposals enter the pile, not the active queue.
+proposals enter the pile, not the active queue. See the
+[consumer conformance kit](consumer-conformance-kit.md) for a runnable
+starting point.
 
 ---
 
