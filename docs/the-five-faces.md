@@ -3,9 +3,10 @@
 **Every program in the Weave is a functional core wearing five interfaces: an agent
 skill, a CLI, an API, an MCP server, and a UI.** Each face is an independent means of
 accessing the core. A tool missing a face is incomplete — the gap is backlog, not
-philosophy.
+philosophy — *unless the exception is argued and ratified* (see Named exceptions).
 
-Stated by the operator 2026-07-02; supersedes the looser parenthetical in VISION.md
+Stated by the operator 2026-07-02; refined same day: the law is the default demand,
+not a straitjacket. Supersedes the looser parenthetical in VISION.md
 ("one core → API + CLI + MCP + SDK + skill + thin UI") as the canonical form.
 
 ## Topology
@@ -59,7 +60,7 @@ From the showcase evidence pass (cold demos, `a/showcase/`). ✓ proven · ◐ p
 | landmark | ✓ | ✗ (CLI links core — named exception?) | ✓ + GH Action | ✗ | ✗ | ? |
 | canary | ✓ | ✓ API-first + OpenAPI (+TS SDK) | ✓ | ? | ✗ (was "by design" — now a gap) | ? |
 | bastion | ✓ | ◐ healthz + per-app | ✓ `bastion status` | ✓ via cairn | ✓ via cairn | ? |
-| harness-kit | ✓ | ✗ | ✓ | ✗ | ✗ (bare docs site) | ✓ (it ships skills) |
+| harness-kit | ✓ | exception (ratified 07-02) | ✓ | experiment candidate | ◐ bare docs site | ✓ (it ships skills) |
 | weave organs (gazette, showcase) | ◐ scripts | ✗ | ◐ | ✗ | ✓ (they ARE pages) | ✗ |
 
 Honest readings:
@@ -74,6 +75,28 @@ Honest readings:
 - The **gazette and showcase** — the fleet's self-reporting organs — currently exist
   as a script + hand-assembled artifacts. In their ultimate form they are Weave
   organs (in this repo or as a distinct service) and subject to this same law.
+
+## Named exceptions (ratified)
+
+Exceptions are argued per-repo and recorded here — never defaulted into.
+
+- **harness-kit: no API — ratified 2026-07-02.** The product is borderline a pile of
+  skill directories: prepackaged, batteries-included instructions (SKILL.md +
+  references/ + scripts/), not a service. Nothing an API would serve that the
+  filesystem and CLI don't already. Its faces are: skill (it *ships* skills), CLI
+  (bootstrap/checks), UI (the docs site — still owed polish), and MCP as an
+  **experiment, not an obligation** — see below.
+
+### The harness-kit MCP experiment
+
+Worth running, not yet owed: an MCP face over the skill catalog, in the spirit of
+skills.sh-style skill libraries. The pull: the end-state vision is a curated set of
+high-quality, demonstrably useful skills — ours or externally sourced (skills.sh and
+other published catalogs) — that orchestrator agents query to compose bespoke
+harnesses: defining agents (e.g. in bitterblossom) whose harness is assembled from a
+subset of the catalog. An MCP face is how an orchestrator browses/pulls that catalog
+at composition time. Experiment ticket, evidence before promotion (crucible measures
+whether catalog-composed harnesses beat hand-rolled ones).
 
 ## Relationship to other doctrine
 
