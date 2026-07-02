@@ -17,6 +17,8 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [Seam reference](docs/seam-reference.md) — per-seam cards: owner, fields, fixture expectations, contract-test oracle.
 - [Remote and review primitives](docs/remote-and-review-primitives.md) — host/review research and recommendation.
 - [SDLC organ promotion criteria](docs/sdlc-organ-promotion.md) — how organs are minted (and why Cerberus is still advisory).
+- [Doc-sync flow](docs/doc-sync-flow.md) — the doc-drift maintenance loop (backlog 005).
+- [CI-auditor flow](docs/ci-auditor-flow.md) — the gate-improvement maintenance loop (backlog 006).
 - [Remote event schema](docs/schemas/weave.remote_event.v1.schema.json) — the one contract fully specified today.
 
 New here? Start with [onboarding](docs/onboarding.md). Contributing? Read [CONTRIBUTING.md](CONTRIBUTING.md).
