@@ -40,7 +40,9 @@ that piece's repo — the Weave only references it in
    (`weave.*`), it lives in `docs/schemas/`. If it is piece-owned, the change
    belongs in the piece repo.
 2. **Draft the schema.** Use JSON Schema draft 2020-12. Every payload carries
-   `schema_version` in the form `<owner>.<noun>.v<major>`.
+   `schema_version` in the form `<owner>.<noun>.v<major>`. Adding or bumping
+   a Weave-owned schema requires an entry in
+   [docs/schema-changelog.md](docs/schema-changelog.md) in the same PR.
 3. **Add fixtures.** At minimum one valid fixture under
    `docs/fixtures/contracts/`, named `<schema_version>.<case>.json`. Add
    invalid fixtures using a marker token in the filename
