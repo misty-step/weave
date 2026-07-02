@@ -277,7 +277,8 @@ is rejected. Proposals enter the pile, not the active queue.
 
 Fixtures: `docs/fixtures/contracts/weave.work_item_proposal.v1.canary-incident.json`
 (valid), `weave.work_item_proposal.v1.missing-schema-version.json` (invalid),
-`weave.work_item_proposal.v1.status-in-progress.json` (invalid).
+`weave.work_item_proposal.v1.status-in-progress.json` (invalid),
+`weave.work_item_proposal.v1.unknown-major.json` (invalid).
 
 **Contract test:** Powder accepts a proposal and applies card-lifecycle rules
 (opening in backlog). A proposal with `status: in_progress` is rejected —
