@@ -1,6 +1,6 @@
 # Ship a consumer-conformance kit for Weave-owned schemas
 
-Priority: P2 · Status: ready · Estimate: M
+Priority: P2 · Status: done · Estimate: M
 
 ## Goal
 `docs/composition-contracts.md` rule 4 says consumers must pin a producer

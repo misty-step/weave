@@ -1,6 +1,6 @@
 # Reconcile "Schema registry shape" docs with the actual fixture layout
 
-Priority: P3 · Status: ready · Estimate: S
+Priority: P3 · Status: done · Estimate: S
 
 ## Goal
 Both `docs/composition-contracts.md` and `docs/seam-reference.md` end with a

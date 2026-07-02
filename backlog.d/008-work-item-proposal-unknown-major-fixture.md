@@ -1,6 +1,6 @@
 # Add missing unknown-major invalid fixture for weave.work_item_proposal.v1
 
-Priority: P2 · Status: ready · Estimate: S
+Priority: P2 · Status: done · Estimate: S
 
 ## Goal
 `CONTRIBUTING.md` §"Adding or changing a contract" step 3 requires: "Add

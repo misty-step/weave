@@ -1,6 +1,6 @@
 # Broaden valid-fixture coverage for both weave-owned schemas
 
-Priority: P3 · Status: ready · Estimate: S
+Priority: P3 · Status: done · Estimate: S
 
 ## Goal
 Every valid fixture today exercises a "typical happy path" shape, not the

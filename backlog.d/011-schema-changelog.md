@@ -1,6 +1,6 @@
 # Write a schema changelog for Weave-owned contracts
 
-Priority: P3 · Status: ready · Estimate: S
+Priority: P3 · Status: done · Estimate: S
 
 ## Goal
 `docs/composition-contracts.md` states the versioning *rules* (rule 5: additive
