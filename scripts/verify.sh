@@ -67,3 +67,11 @@ NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/validate-contracts.cjs" 
 # --- Consumer conformance kit ------------------------------------------------
 echo "==> Running consumer conformance kit"
 NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/consumer-conformance-kit.cjs" "$ROOT"
+
+# --- Rust app checks ----------------------------------------------------------
+if [ -f "$ROOT/Cargo.toml" ]; then
+  echo "==> Checking Rust workspace"
+  (cd "$ROOT" && cargo fmt --all -- --check)
+  (cd "$ROOT" && cargo clippy --workspace --all-targets -- -D warnings)
+  (cd "$ROOT" && cargo test --workspace)
+fi
