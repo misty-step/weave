@@ -23,5 +23,6 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [Work item proposal schema](docs/schemas/weave.work_item_proposal.v1.schema.json) — triage→Powder proposal envelope.
 - [Schema changelog](docs/schema-changelog.md) — version history for Weave-owned contracts.
 - [Consumer conformance kit](docs/consumer-conformance-kit.md) — runnable starting point for consumer-side contract tests.
+- [Release event receiver](docs/release-event-receiver.md) — public Landmark webhook ingress for the Bridge feed.
 
 New here? Start with [onboarding](docs/onboarding.md). Contributing? Read [CONTRIBUTING.md](CONTRIBUTING.md).
