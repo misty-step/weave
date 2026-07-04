@@ -1,0 +1,83 @@
+{
+  "schema_version": "landmark.release-kit.v1",
+  "generated_at": "2026-07-04T05:15:00Z",
+  "product": {
+    "name": "Weave",
+    "repository": "misty-step/weave"
+  },
+  "release": {
+    "tag": "v0.1.0-weave-thread",
+    "version": "v0.1.0-weave-thread",
+    "repository": "misty-step/weave",
+    "release_url": "https://github.com/misty-step/weave/releases/tag/v0.1.0-weave-thread"
+  },
+  "classification": {
+    "importance": "medium",
+    "audiences": ["developer"],
+    "why_it_matters": "Cross-repo thread replay now has a gated release event fixture."
+  },
+  "artifacts": [
+    {
+      "id": "release-notes",
+      "kind": "release_notes",
+      "audience": "developer",
+      "owner": "landmark",
+      "status": "produced",
+      "path": "docs/releases/weave-thread.md",
+      "sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "acceptance": ["release notes describe the cross-repo thread"]
+    },
+    {
+      "id": "release-feed",
+      "kind": "feed",
+      "audience": "operator",
+      "owner": "producer-adapter",
+      "status": "produced",
+      "path": "release-feed/weave-thread.json",
+      "sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "acceptance": ["release feed receiver stores the release kit event"]
+    }
+  ],
+  "producer_contracts": [
+    {
+      "id": "release-feed-receiver",
+      "producer": "release feed receiver",
+      "adapter_kind": "remote-service",
+      "input_artifacts": ["release-notes"],
+      "output_artifacts": ["release-feed"],
+      "command": "POST /v1/events with X-Signature-256 over the raw release-kit JSON body",
+      "mutates": true,
+      "acceptance": ["receiver stores the full landmark.release-kit.v1 JSON body"],
+      "evidence_path": "release-feed/weave-thread-receipt.json"
+    }
+  ],
+  "provenance": [
+    {
+      "artifact_id": "release-notes",
+      "sources": ["weave.thread-replay:weave-906"]
+    },
+    {
+      "artifact_id": "release-feed",
+      "sources": ["landmark.notify-release-feed:fixture"]
+    }
+  ],
+  "approvals": [
+    {
+      "artifact_id": "release-notes",
+      "state": "not-required",
+      "approver": "thread-replay",
+      "reason": "fixture-only release notes"
+    },
+    {
+      "artifact_id": "release-feed",
+      "state": "not-required",
+      "approver": "thread-replay",
+      "reason": "fixture-only feed row"
+    }
+  ],
+  "status": {
+    "complete": true,
+    "blocked": false,
+    "summary": "release kit fixture complete for thread replay"
+  }
+}

@@ -88,9 +88,11 @@ the same data must be present unless explicitly waived in that schema.
 The following live repos already have pieces of the versioned contract posture:
 
 - Weave owns `weave.remote_event.v1` (`docs/schemas/weave.remote_event.v1.schema.json`)
-  and `weave.work_item_proposal.v1` (`docs/schemas/weave.work_item_proposal.v1.schema.json`),
-  each with valid and invalid fixtures under `docs/fixtures/contracts/`,
-  exercised by `./scripts/verify.sh`.
+  `weave.work_item_proposal.v1` (`docs/schemas/weave.work_item_proposal.v1.schema.json`),
+  and `weave.release_feed_row.v1`
+  (`docs/schemas/weave.release_feed_row.v1.schema.json`), each with valid and
+  invalid fixtures under `docs/fixtures/contracts/`, exercised by
+  `./scripts/verify.sh`.
 - Cerberus owns `cerberus.review_request.v1`, `cerberus.review_artifact.v1`,
   receipt bundle, producer manifest, and post plan/result shapes.
 - Crucible owns `crucible.eval_spec.v1`, labels, calibration records, run
@@ -102,8 +104,10 @@ The following live repos already have pieces of the versioned contract posture:
 - Landmark has a checked schema registry for manifest, run evidence,
   release-kit, synthesis status, release entries, replay results, fleet plans,
   and failure envelopes.
-- Powder has database `schema_version` but needs product-level event schemas
-  for the Weave seam.
+- Weave pins fixture-validation snapshots for producer-owned
+  `powder.card_event.v1` and `landmark.release-kit.v1` so
+  `scripts/thread-replay.cjs` can fail Weave CI if the first incident ->
+  Powder -> release-feed thread breaks across a schema seam.
 
 ## First implementation order
 

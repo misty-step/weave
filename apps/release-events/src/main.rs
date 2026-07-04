@@ -23,6 +23,7 @@ use tracing::{error, info};
 
 const MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 const SIGNATURE_HEADER: &str = "x-signature-256";
+const RELEASE_FEED_ROW_SCHEMA_VERSION: &str = "weave.release_feed_row.v1";
 
 #[derive(Debug, Parser, Clone)]
 struct Config {
@@ -51,6 +52,8 @@ struct EventsQuery {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct StoredEvent {
+    #[serde(default = "default_release_feed_row_schema_version")]
+    schema_version: String,
     received_at: DateTime<Utc>,
     kind: EventKind,
     repository: String,
@@ -64,6 +67,10 @@ struct StoredEvent {
 enum EventKind {
     LandmarkWebhook,
     LandmarkReleaseKit,
+}
+
+fn default_release_feed_row_schema_version() -> String {
+    RELEASE_FEED_ROW_SCHEMA_VERSION.to_string()
 }
 
 #[derive(Debug, Serialize)]
@@ -190,6 +197,7 @@ async fn get_events(
 fn classify_event(payload: Value) -> Result<StoredEvent, &'static str> {
     if let Some(summary) = plain_landmark_summary(&payload) {
         return Ok(StoredEvent {
+            schema_version: default_release_feed_row_schema_version(),
             received_at: Utc::now(),
             kind: EventKind::LandmarkWebhook,
             repository: summary.repository,
@@ -200,6 +208,7 @@ fn classify_event(payload: Value) -> Result<StoredEvent, &'static str> {
     }
     if let Some(summary) = release_kit_summary(&payload) {
         return Ok(StoredEvent {
+            schema_version: default_release_feed_row_schema_version(),
             received_at: Utc::now(),
             kind: EventKind::LandmarkReleaseKit,
             repository: summary.repository,

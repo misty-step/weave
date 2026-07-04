@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Verify contract schemas and fixtures
+      - name: Verify contract schemas, fixtures, and thread replay
         run: ./scripts/verify.sh

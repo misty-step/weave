@@ -1,0 +1,13 @@
+{
+  "received_at": "2026-07-04T05:16:00Z",
+  "kind": "landmark_release_kit",
+  "repository": "misty-step/weave",
+  "version": "v0.1.0-weave-thread",
+  "release_url": "https://github.com/misty-step/weave/releases/tag/v0.1.0-weave-thread",
+  "payload": {
+    "schema_version": "landmark.release-kit.v1",
+    "release": {
+      "release_url": "https://github.com/misty-step/weave/releases/tag/v0.1.0-weave-thread"
+    }
+  }
+}

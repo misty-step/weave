@@ -1,0 +1,19 @@
+{
+  "event_id": "evt-weave-missing-schema-version",
+  "event_type": "moved-to-ready",
+  "occurred_at": 1783137660,
+  "actor": "operator",
+  "card": {
+    "id": "weave-thread-fixture-recorded-001",
+    "title": "Weave thread fixture",
+    "acceptance": ["record card lifecycle events"],
+    "status": "ready",
+    "priority": "p2",
+    "created_at": 1783137600,
+    "updated_at": 1783137660
+  },
+  "change": {
+    "previous_status": "backlog",
+    "status": "ready"
+  }
+}

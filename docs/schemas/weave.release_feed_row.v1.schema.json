@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/misty-step/weave/blob/master/docs/schemas/weave.release_feed_row.v1.schema.json",
+  "title": "Weave Release Feed Row v1",
+  "description": "Append-only Bridge feed row stored by apps/release-events after accepting a Landmark release event.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "received_at",
+    "kind",
+    "repository",
+    "version",
+    "release_url",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "weave.release_feed_row.v1"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["landmark_webhook", "landmark_release_kit"]
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "release_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": { "const": "landmark_release_kit" }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["schema_version", "release"],
+            "properties": {
+              "schema_version": { "const": "landmark.release-kit.v1" },
+              "release": {
+                "type": "object",
+                "required": ["release_url"],
+                "properties": {
+                  "release_url": { "type": "string", "format": "uri" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
