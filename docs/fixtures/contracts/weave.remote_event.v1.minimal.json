@@ -10,10 +10,14 @@
   "correlation_id": "test:owner/repo:pull_request:1:opened",
   "source": {
     "kind": "github",
+    "host": "github.com",
     "external_id": "delivery-1"
   },
+  "repository": {
+    "id": "repo-1",
+    "full_name": "owner/repo"
+  },
   "subject": {
-    "repo": "owner/repo",
     "kind": "pull_request",
     "id": "1"
   },
@@ -23,5 +27,15 @@
   },
   "action": "opened",
   "idempotency_key": "test:delivery-1:pull_request:1:opened",
+  "host_payload": {
+    "event_name": "pull_request",
+    "delivery_id": "delivery-1",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/owner/repo/pull/1"
+      }
+    ]
+  },
   "payload": {}
 }

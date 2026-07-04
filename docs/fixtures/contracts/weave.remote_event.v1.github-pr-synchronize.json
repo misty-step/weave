@@ -1,0 +1,72 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_pr_sync_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T18:24:17Z",
+  "occurred_at": "2026-07-03T18:24:12Z",
+  "correlation_id": "github:misty-step/weave:pull_request:17:synchronize",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-pr-sync-17",
+    "url": "https://github.com/misty-step/weave/pull/17"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "pull_request",
+    "id": "17",
+    "number": 17,
+    "url": "https://github.com/misty-step/weave/pull/17"
+  },
+  "actor": {
+    "id": "github-user-17",
+    "login": "codex-weave-017",
+    "kind": "bot"
+  },
+  "action": "synchronize",
+  "idempotency_key": "github:delivery-pr-sync-17:pull_request:17:synchronize:92874f5000000000000000000000000000000000",
+  "host_payload": {
+    "event_name": "pull_request",
+    "delivery_id": "delivery-pr-sync-17",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/weave/pull/17"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/pulls/17"
+      },
+      {
+        "rel": "commits",
+        "href": "https://api.github.com/repos/misty-step/weave/pulls/17/commits"
+      }
+    ]
+  },
+  "policy": {
+    "merge_policy": "human-review",
+    "source": "repo-rule",
+    "reason": "schema contract change requires human-review until consumers pin the new contract",
+    "labels": [
+      "contract-change"
+    ]
+  },
+  "payload": {
+    "base_ref": "master",
+    "head_ref": "codex/weave-017-remote-event-envelope",
+    "head_sha": "92874f5000000000000000000000000000000000",
+    "draft": false,
+    "state": "open"
+  }
+}

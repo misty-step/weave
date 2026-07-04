@@ -1,0 +1,62 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_check_run_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:07:30Z",
+  "occurred_at": "2026-07-03T19:07:28Z",
+  "correlation_id": "github:misty-step/weave:check_run:812345:completed",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-check-run-0001",
+    "url": "https://github.com/misty-step/weave/runs/812345"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "check_run",
+    "id": "812345",
+    "sha": "9f1c0de0000000000000000000000000000000000",
+    "url": "https://github.com/misty-step/weave/runs/812345"
+  },
+  "actor": {
+    "id": "github-app-15368",
+    "login": "github-actions",
+    "kind": "app"
+  },
+  "action": "completed",
+  "idempotency_key": "github:delivery-check-run-0001:check_run:812345:completed:success",
+  "host_payload": {
+    "event_name": "check_run",
+    "delivery_id": "delivery-check-run-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/weave/runs/812345"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/check-runs/812345"
+      }
+    ]
+  },
+  "payload": {
+    "name": "verify",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "9f1c0de0000000000000000000000000000000000",
+    "pull_requests": [
+      17
+    ]
+  }
+}

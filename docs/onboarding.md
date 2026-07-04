@@ -59,7 +59,8 @@ Two Weave-owned schemas have complete definitions and fixtures:
 
 - [Remote event schema](schemas/weave.remote_event.v1.schema.json) — the
   host-neutral event envelope. Fixtures in
-  [fixtures/contracts/](fixtures/contracts/).
+  [fixtures/contracts/](fixtures/contracts/), with GitHub projection details in
+  [remote event projection](remote-event-projection.md).
 - [Work item proposal schema](schemas/weave.work_item_proposal.v1.schema.json)
   — the triage→Powder proposal envelope. Fixtures in the same directory.
 

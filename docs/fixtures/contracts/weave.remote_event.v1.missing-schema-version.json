@@ -9,13 +9,18 @@
   "correlation_id": "github:misty-step/bitterblossom:pull_request:882:opened",
   "source": {
     "kind": "github",
+    "host": "github.com",
     "external_id": "delivery-123456789",
     "url": "https://github.com/misty-step/bitterblossom/pull/882"
   },
+  "repository": {
+    "id": "github-repo-915001",
+    "full_name": "misty-step/bitterblossom"
+  },
   "subject": {
-    "repo": "misty-step/bitterblossom",
     "kind": "pull_request",
     "id": "882",
+    "number": 882,
     "url": "https://github.com/misty-step/bitterblossom/pull/882"
   },
   "actor": {
@@ -25,6 +30,16 @@
   },
   "action": "opened",
   "idempotency_key": "github:delivery-123456789:pull_request:882:opened",
+  "host_payload": {
+    "event_name": "pull_request",
+    "delivery_id": "delivery-123456789",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/bitterblossom/pull/882"
+      }
+    ]
+  },
   "payload": {
     "base_ref": "master",
     "head_ref": "factory/missing-version",

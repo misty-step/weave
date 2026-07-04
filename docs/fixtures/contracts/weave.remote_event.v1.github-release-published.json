@@ -1,0 +1,58 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_release_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:30:02Z",
+  "occurred_at": "2026-07-03T19:30:00Z",
+  "correlation_id": "github:misty-step/weave:release:v0.4.0:published",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-release-0001",
+    "url": "https://github.com/misty-step/weave/releases/tag/v0.4.0"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "release",
+    "id": "v0.4.0",
+    "url": "https://github.com/misty-step/weave/releases/tag/v0.4.0"
+  },
+  "actor": {
+    "id": "github-user-101",
+    "login": "operator",
+    "kind": "user"
+  },
+  "action": "published",
+  "idempotency_key": "github:delivery-release-0001:release:v0.4.0:published",
+  "host_payload": {
+    "event_name": "release",
+    "delivery_id": "delivery-release-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "release",
+        "href": "https://github.com/misty-step/weave/releases/tag/v0.4.0"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/releases/tags/v0.4.0"
+      }
+    ]
+  },
+  "payload": {
+    "tag_name": "v0.4.0",
+    "target_commitish": "master",
+    "draft": false,
+    "prerelease": false
+  }
+}

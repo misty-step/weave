@@ -19,7 +19,12 @@ const schemas = readdirSync(schemaDir).filter(f => f.endsWith('.schema.json'));
 const allFixtures = readdirSync(fixtureDir).filter(f => f.endsWith('.json'));
 
 // A fixture is "valid" unless its name contains an invalid-marker token.
-const INVALID_MARKERS = ['missing-schema-version', 'unknown-major', 'status-in-progress'];
+const INVALID_MARKERS = [
+  'missing-schema-version',
+  'unknown-major',
+  'status-in-progress',
+  'missing-host-payload',
+];
 
 const isInvalid = (name) => INVALID_MARKERS.some(m => name.includes(m));
 

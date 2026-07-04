@@ -85,11 +85,14 @@ GitHub webhook ──▶ github-adapter ──▶ weave.remote_event.v1 ──�
 Forgejo webhook ──▶ forgejo-adapter ──▶ weave.remote_event.v1 ──▶ same consumers
 ```
 
-The envelope carries `schema_version`, `source.kind`, `subject`, `actor`,
-`action`, `idempotency_key`, and a `payload` with selected native details. It
-must not carry secrets, private instance data, local paths, or tailnet-only
-hostnames. See [the schema](schemas/weave.remote_event.v1.schema.json) and
-[the GitHub PR-opened fixture](fixtures/contracts/weave.remote_event.v1.github-pr-opened.json).
+The envelope carries `schema_version`, source host, repository identity,
+`subject`, `actor`, `action`, timestamps, `idempotency_key`,
+`host_payload.links`, optional merge-policy metadata, and a `payload` with
+selected native details. It must not carry secrets, private instance data,
+local paths, or tailnet-only hostnames. See
+[the schema](schemas/weave.remote_event.v1.schema.json),
+[the projection doc](remote-event-projection.md), and
+[the GitHub PR-opened fixture](fixtures/contracts/weave.remote_event.v1.github-pr-opened-from-webhook.json).
 
 BB, Cerberus, and Landmark consume `weave.remote_event.v1`, not raw host
 payloads. This is what lets the fleet migrate hosts without rewriting the

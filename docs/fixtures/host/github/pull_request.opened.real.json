@@ -1,0 +1,73 @@
+{
+  "headers": {
+    "X-GitHub-Event": "pull_request",
+    "X-GitHub-Delivery": "72d3162e-cc78-11ef-9cd2-0242ac120002",
+    "X-GitHub-Hook-ID": "41873622"
+  },
+  "body": {
+    "action": "opened",
+    "number": 1347,
+    "pull_request": {
+      "id": 2401925555,
+      "number": 1347,
+      "state": "open",
+      "locked": false,
+      "title": "Add host neutral remote event envelope",
+      "user": {
+        "login": "codex-worker",
+        "id": 17291442,
+        "type": "Bot"
+      },
+      "body": "Normalize the native pull request webhook before BB or Cerberus sees it.",
+      "created_at": "2026-07-03T20:13:04Z",
+      "updated_at": "2026-07-03T20:13:04Z",
+      "html_url": "https://github.com/octo-org/Hello-World/pull/1347",
+      "url": "https://api.github.com/repos/octo-org/Hello-World/pulls/1347",
+      "diff_url": "https://github.com/octo-org/Hello-World/pull/1347.diff",
+      "patch_url": "https://github.com/octo-org/Hello-World/pull/1347.patch",
+      "draft": false,
+      "head": {
+        "label": "octo-org:codex/remote-event-envelope",
+        "ref": "codex/remote-event-envelope",
+        "sha": "b0b1f9a000000000000000000000000000000000",
+        "repo": {
+          "id": 1296269,
+          "name": "Hello-World",
+          "full_name": "octo-org/Hello-World",
+          "html_url": "https://github.com/octo-org/Hello-World",
+          "url": "https://api.github.com/repos/octo-org/Hello-World",
+          "clone_url": "https://github.com/octo-org/Hello-World.git",
+          "default_branch": "main"
+        }
+      },
+      "base": {
+        "label": "octo-org:main",
+        "ref": "main",
+        "sha": "f00ba47000000000000000000000000000000000",
+        "repo": {
+          "id": 1296269,
+          "name": "Hello-World",
+          "full_name": "octo-org/Hello-World",
+          "html_url": "https://github.com/octo-org/Hello-World",
+          "url": "https://api.github.com/repos/octo-org/Hello-World",
+          "clone_url": "https://github.com/octo-org/Hello-World.git",
+          "default_branch": "main"
+        }
+      }
+    },
+    "repository": {
+      "id": 1296269,
+      "name": "Hello-World",
+      "full_name": "octo-org/Hello-World",
+      "html_url": "https://github.com/octo-org/Hello-World",
+      "url": "https://api.github.com/repos/octo-org/Hello-World",
+      "clone_url": "https://github.com/octo-org/Hello-World.git",
+      "default_branch": "main"
+    },
+    "sender": {
+      "login": "codex-worker",
+      "id": 17291442,
+      "type": "Bot"
+    }
+  }
+}

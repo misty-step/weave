@@ -68,6 +68,10 @@ NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/validate-contracts.cjs" 
 echo "==> Running consumer conformance kit"
 NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/consumer-conformance-kit.cjs" "$ROOT"
 
+# --- Remote event conformance ------------------------------------------------
+echo "==> Running remote event conformance"
+NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/remote-event-conformance.cjs" "$ROOT"
+
 # --- Cross-repo thread replay -------------------------------------------------
 echo "==> Replaying weave-906 cross-repo thread"
 NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/thread-replay.cjs" "$ROOT"
