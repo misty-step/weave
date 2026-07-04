@@ -82,6 +82,11 @@ split a large feature into a dependency chain without waiting for every lower
 PR to merge. This preserves GitHub's social/review surface while reducing PR
 size and making Cerberus review packets smaller and more focused.
 
+The operational discipline is now
+[stacked-diff discipline](stacked-diff-discipline.md): use native GitHub branch
+bases, explicit stack metadata in PR bodies, restack with ordinary rebase, and
+merge bottom-up with a default-branch remote-sync check.
+
 ### Why `jj` as a local primitive?
 
 The fleet problem is not only remote review. It is also local recovery across

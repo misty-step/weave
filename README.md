@@ -16,6 +16,7 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [Composition contracts](docs/composition-contracts.md) — the seam map and versioned-schema rules.
 - [Seam reference](docs/seam-reference.md) — per-seam cards: owner, fields, fixture expectations, contract-test oracle.
 - [Remote and review primitives](docs/remote-and-review-primitives.md) — host/review research and recommendation.
+- [Stacked-diff discipline](docs/stacked-diff-discipline.md) — native GitHub stack mechanics for agent lanes.
 - [Remote event projection](docs/remote-event-projection.md) — GitHub webhook-to-envelope mapping and merge-policy placement.
 - [SDLC organ promotion criteria](docs/sdlc-organ-promotion.md) — how organs are minted (and why Cerberus is still advisory).
 - [Doc-sync flow](docs/doc-sync-flow.md) — the doc-drift maintenance loop (backlog 005).
