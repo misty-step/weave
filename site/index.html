@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weave - the Misty Step factory's composition layer</title>
+    <meta
+      name="description"
+      content="Weave is the Misty Step factory's composition layer and hub: the contracts, event schema, and cross-tool doctrine that let independently-built products cohere into one fleet."
+    />
+    <script>
+      try {
+        var m = localStorage.getItem('ae-mode');
+        if (m === 'dark' || m === 'light') {
+          document.documentElement.classList.add(m);
+          document.documentElement.style.colorScheme = m;
+        }
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="aesthetic.css" />
+    <link rel="stylesheet" href="marketing.css" />
+  </head>
+  <body>
+    <svg aria-hidden="true" width="0" height="0" style="position: absolute">
+      <symbol id="i-layers" viewBox="0 0 24 24">
+        <path
+          d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"
+        />
+        <path
+          d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"
+        />
+        <path
+          d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"
+        />
+      </symbol>
+      <symbol id="i-flower" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"
+        />
+        <path d="M12 7.5V9" />
+        <path d="M7.5 12H9" />
+        <path d="M16.5 12H15" />
+        <path d="M12 16.5V15" />
+        <path d="m8 8 1.88 1.88" />
+        <path d="M14.12 9.88 16 8" />
+        <path d="m8 16 1.88-1.88" />
+        <path d="M14.12 14.12 16 16" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <path d="M16 3.128a4 4 0 0 1 0 7.744" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <circle cx="9" cy="7" r="4" />
+      </symbol>
+      <symbol id="i-snowflake" viewBox="0 0 24 24">
+        <path d="m10 20-1.25-2.5L6 18" />
+        <path d="M10 4 8.75 6.5 6 6" />
+        <path d="m14 20 1.25-2.5L18 18" />
+        <path d="m14 4 1.25 2.5L18 6" />
+        <path d="m17 21-3-6h-4" />
+        <path d="m17 3-3 6 1.5 3" />
+        <path d="M2 12h6.5L10 9" />
+        <path d="m20 10-1.5 2 1.5 2" />
+        <path d="M22 12h-6.5L14 15" />
+        <path d="m4 10 1.5 2L4 14" />
+        <path d="m7 21 3-6-1.5-3" />
+        <path d="m7 3 3 6h4" />
+      </symbol>
+      <symbol id="i-mirror-rectangular" viewBox="0 0 24 24">
+        <path d="M11 6 8 9" />
+        <path d="m16 7-8 8" />
+        <rect x="4" y="2" width="16" height="20" rx="2" />
+      </symbol>
+      <symbol id="i-scan-search" viewBox="0 0 24 24">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="m16 16-1.9-1.9" />
+      </symbol>
+      <symbol id="i-bird" viewBox="0 0 24 24">
+        <path d="M16 7h.01" />
+        <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+        <path d="m20 7 2 .5-2 .5" />
+        <path d="M10 18v3" />
+        <path d="M14 17.75V21" />
+        <path d="M7 18a6 6 0 0 0 3.84-10.61" />
+      </symbol>
+      <symbol id="i-flask-conical" viewBox="0 0 24 24">
+        <path
+          d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"
+        />
+        <path d="M6.453 15h11.094" />
+        <path d="M8.5 2h7" />
+      </symbol>
+      <symbol id="i-brain-circuit" viewBox="0 0 24 24">
+        <path
+          d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"
+        />
+        <path d="M9 13a4.5 4.5 0 0 0 3-4" />
+        <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
+        <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
+        <path d="M6 18a4 4 0 0 1-1.967-.516" />
+        <path d="M12 13h4" />
+        <path d="M12 18h6a2 2 0 0 1 2 2v1" />
+        <path d="M12 8h8" />
+        <path d="M16 8V5a2 2 0 0 1 2-2" />
+        <circle cx="16" cy="13" r=".5" />
+        <circle cx="18" cy="3" r=".5" />
+        <circle cx="20" cy="21" r=".5" />
+        <circle cx="20" cy="8" r=".5" />
+      </symbol>
+      <symbol id="i-milestone" viewBox="0 0 24 24">
+        <path d="M12 13v8" />
+        <path d="M12 3v3" />
+        <path
+          d="M18.172 6a2 2 0 0 1 1.414.586l2.06 2.06a1.207 1.207 0 0 1 0 1.708l-2.06 2.06a2 2 0 0 1-1.414.586H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"
+        />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </symbol>
+      <symbol id="i-circle-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </symbol>
+    </svg>
+
+    <div class="ae-screen ae-wide">
+      <header class="ae-bar msk-bar">
+        <a class="ae-logo" href="./" aria-label="Weave home">
+          <span class="ae-app-mark" aria-hidden="true">
+            <svg class="ae-icon" data-lucide="layers">
+              <use href="#i-layers" />
+            </svg>
+          </span>
+          <span class="ae-name">Weave</span>
+        </a>
+        <span class="msk-actions">
+          <nav class="ae-chrome msk-nav" aria-label="Site">
+            <a href="#family">the family</a>
+            <a href="#features">what weave is</a>
+            <a href="#screens">proof</a>
+            <a href="changelog.html">release notes</a>
+          </nav>
+          <button class="ae-mode" aria-label="toggle color mode">
+            <svg class="ae-icon ae-sun"><use href="#i-sun" /></svg>
+            <svg class="ae-icon ae-moon"><use href="#i-moon" /></svg>
+          </button>
+        </span>
+      </header>
+
+      <main class="ae-stage ae-stage-scroll" id="content">
+        <div class="msk-page">
+          <section class="msk-hero" aria-labelledby="hero-title">
+            <p class="ae-chrome">THE FACTORY'S COMPOSITION LAYER</p>
+            <h1 class="ae-h" id="hero-title">
+              One fleet, built as separate products. Weave is what makes them
+              cohere.
+            </h1>
+            <p class="msk-pitch">
+              Misty Step ships a fleet of independently-built agent products —
+              a work ledger, a production-health service, an eval workbench, an
+              execution plane, a live agent viewer, and more. Weave is the
+              layer underneath all of them: the versioned event contracts, the
+              cross-repo doctrine (stacked-diff review, the five-faces
+              interface law), and — because someone has to say what the fleet
+              actually is — this page, the map of every product in it.
+            </p>
+            <p class="ae-status">
+              <svg class="ae-icon ae-ok" data-lucide="circle-check">
+                <use href="#i-circle-check" />
+              </svg>
+              <span class="ae-status-label"
+                >Every claim on this page is backed by a pinned schema, a
+                merged doctrine doc, or the fleet coverage matrix — linked
+                below, not asserted.</span
+              >
+            </p>
+          </section>
+
+          <section
+            class="msk-section"
+            id="features"
+            aria-labelledby="features-title"
+          >
+            <h2 class="ae-h" id="features-title">What Weave actually is</h2>
+            <div class="ae-list-rows">
+              <div class="ae-list-row">
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">contracts</span>
+                  <span class="ae-list-value"
+                    >Versioned event schemas.</span
+                  >
+                </span>
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">proof</span>
+                  <span class="ae-list-value"
+                    >Pass/fail fixtures and a CI conformance gate.</span
+                  >
+                </span>
+              </div>
+              <div class="ae-list-row">
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">doctrine</span>
+                  <span class="ae-list-value"
+                    >Rules that outlive one repo.</span
+                  >
+                </span>
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">shape</span>
+                  <span class="ae-list-value"
+                    >A schema/doctrine repo, not a runtime UI.</span
+                  >
+                </span>
+              </div>
+              <div class="ae-list-row">
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">trust</span>
+                  <span class="ae-list-value"
+                    >Public repo, public doctrine.</span
+                  >
+                </span>
+                <span class="ae-list-cell">
+                  <span class="ae-list-label">fit</span>
+                  <span class="ae-list-value"
+                    >Aesthetic tokens with the Weave mark.</span
+                  >
+                </span>
+              </div>
+            </div>
+            <p class="ae-dim">
+              The two contracts today are
+              <code>weave.remote_event.v1</code> and
+              <code>weave.work_item_proposal.v1</code>; the doctrine docs are
+              the
+              <a
+                href="https://github.com/misty-step/weave/blob/master/docs/the-five-faces.md"
+                >five-faces interface law</a
+              >
+              and the
+              <a
+                href="https://github.com/misty-step/weave/blob/master/docs/stacked-diff-discipline.md"
+                >stacked-diff review discipline</a
+              >.
+            </p>
+          </section>
+
+          <section class="msk-section" id="family" aria-labelledby="family-title">
+            <div class="msk-section-head">
+              <h2 class="ae-h" id="family-title">The family</h2>
+              <p class="ae-dim">
+                Every product Weave composes. Capability signals are pulled
+                straight from the
+                <a href="https://github.com/misty-step/weave/blob/master/docs/the-five-faces.md"
+                  >fleet coverage matrix</a
+                >
+                where one exists; newer products get a plain description
+                instead of a guessed grade. Cards link out once a product has
+                a live public site — most don't yet, and this page says so.
+              </p>
+            </div>
+            <div class="ae-wall" aria-label="Product family">
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="flower">
+                        <use href="#i-flower" />
+                      </svg>
+                    </span>
+                    <strong>Bitterblossom</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    The Weave execution plane: backlog chewing, review
+                    dispatch, incident triage, and ad-hoc repo work, dispatched
+                    and observed as agent runs.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    API + CLI + UI shipped, MCP read-only by construction — no
+                    live public site yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="users">
+                        <use href="#i-users" />
+                      </svg>
+                    </span>
+                    <strong>Roster</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    Makes agents first-class citizens of the factory: the one
+                    place every agent's role, permitted skills, and model
+                    policy is declared, then run on any plane.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    New repo, predates the fleet coverage pass — no
+                    face-coverage claim made here, no live site yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="snowflake">
+                        <use href="#i-snowflake" />
+                      </svg>
+                    </span>
+                    <strong>Powder</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    The self-hosted work ledger: cards, claims, runs, comments,
+                    and audit history that operators and agent teams share
+                    instead of losing state in chat.
+                  </p>
+                  <p class="ae-wall-meta">
+                    <a href="https://misty-step.github.io/powder/"
+                      >Live site &rarr;</a
+                    >
+                    API + CLI + MCP shipped; UI (Kanban board) is tracked
+                    backlog.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="mirror-rectangular">
+                        <use href="#i-mirror-rectangular" />
+                      </svg>
+                    </span>
+                    <strong>Glass</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    The live stage: agents publish typed surfaces — HTML,
+                    diffs, traces, terminal output — while they work, and the
+                    operator replies without breaking their flow.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    Public site is built and ready; the repo is private today,
+                    so no live link — publishing needs a visibility decision
+                    this page doesn't make.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="scan-search">
+                        <use href="#i-scan-search" />
+                      </svg>
+                    </span>
+                    <strong>Glance</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    Turns a repository into a walkable, cited HTML
+                    understanding site — one narrated page per directory,
+                    every claim traceable to source.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    Private repo, greenfield Rust rewrite (successor to the
+                    archived Go tool) — no face-coverage claim, no live site
+                    yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="bird">
+                        <use href="#i-bird" />
+                      </svg>
+                    </span>
+                    <strong>Canary</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    The agent-first command center for production health:
+                    error logging, uptime checks, incidents, and operational
+                    events that agent fleets read from and write back to.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    API + CLI + MCP shipped; TypeScript SDK is built and
+                    tested, pending npm publish. No live site yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="flask-conical">
+                        <use href="#i-flask-conical" />
+                      </svg>
+                    </span>
+                    <strong>Crucible</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    The eval and benchmark workbench: turns "we need an eval
+                    for this" into an auditable task definition, grader mix,
+                    and result surface.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    CLI + MCP shipped; API is localhost-only by design. Private
+                    repo, no live site yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="brain-circuit">
+                        <use href="#i-brain-circuit" />
+                      </svg>
+                    </span>
+                    <strong>Exocortex</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    A public, local-first evidence core: an agent asks for
+                    context instead of rummaging a private world, and a human
+                    can audit exactly what it saw.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    New repo, predates the fleet coverage pass — no
+                    face-coverage claim made here, no live site yet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="ae-wall-card">
+                <div>
+                  <div class="ae-wall-head">
+                    <span class="ae-wall-mark">
+                      <svg class="ae-icon" data-lucide="milestone">
+                        <use href="#i-milestone" />
+                      </svg>
+                    </span>
+                    <strong>Landmark</strong>
+                  </div>
+                  <p class="ae-wall-meta">
+                    Public open-source release intelligence: changelog
+                    synthesis, version bumps, and release evidence from a Rust
+                    CLI that also runs as a GitHub Action.
+                  </p>
+                  <p class="ae-wall-meta ae-dim">
+                    CLI + GitHub Action + crates.io SDK shipped; API is a
+                    ratified no-server exception. No live site yet.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="msk-section"
+            id="screens"
+            aria-labelledby="screens-title"
+          >
+            <div class="msk-section-head">
+              <h2 class="ae-h" id="screens-title">Proof, not screenshots</h2>
+              <p class="ae-dim">
+                Weave has no runtime UI of its own — its product is contracts
+                and doctrine. Click a frame to inspect real terminal output
+                and the live, merged coverage matrix that backs every claim on
+                this page.
+              </p>
+            </div>
+            <div class="msk-gallery" aria-label="Product evidence">
+              <button
+                class="msk-shot"
+                type="button"
+                data-full="assets/screenshots/01-verify-gate.png"
+                data-title="Composition-contract gate, green"
+              >
+                <img
+                  src="assets/screenshots/01-verify-gate.png"
+                  alt="Real terminal output of ./scripts/verify.sh passing every schema and fixture conformance check"
+                />
+                <span class="ae-chrome">Verify gate, green</span>
+              </button>
+              <button
+                class="msk-shot"
+                type="button"
+                data-full="assets/screenshots/02-stacked-diff-log.png"
+                data-title="Stacked-diff discipline, shipped"
+              >
+                <img
+                  src="assets/screenshots/02-stacked-diff-log.png"
+                  alt="Real git log showing the stacked-diff discipline PRs merged bottom-up on weave master"
+                />
+                <span class="ae-chrome">Stacked-diff discipline, shipped</span>
+              </button>
+              <button
+                class="msk-shot"
+                type="button"
+                data-full="assets/screenshots/03-five-faces-matrix.png"
+                data-title="The fleet coverage matrix"
+              >
+                <img
+                  src="assets/screenshots/03-five-faces-matrix.png"
+                  alt="Live GitHub render of the merged five-faces coverage matrix backing every capability claim on this page"
+                />
+                <span class="ae-chrome">The fleet coverage matrix</span>
+              </button>
+            </div>
+          </section>
+
+          <section
+            class="msk-section msk-release-slot"
+            aria-labelledby="release-title"
+          >
+            <h2 class="ae-h" id="release-title">Release notes</h2>
+            <p>
+              Read the <a href="changelog.html">current release notes</a> for
+              user-facing changes and the evidence behind them.
+            </p>
+          </section>
+        </div>
+      </main>
+
+      <footer class="ae-bar msk-footer">
+        <p class="ae-chrome">Weave composes the Misty Step fleet.</p>
+        <nav class="ae-foot-links ae-chrome" aria-label="Footer">
+          <a
+            data-footer-link="github"
+            href="https://github.com/misty-step/weave"
+            >GitHub</a
+          >
+          <a data-footer-link="misty-step" href="https://mistystep.io"
+            >Misty Step</a
+          >
+        </nav>
+      </footer>
+    </div>
+
+    <dialog class="ae-dialog msk-zoom" aria-labelledby="zoom-title">
+      <div class="msk-zoom-head">
+        <h2 class="ae-dialog-title" id="zoom-title">Screenshot</h2>
+        <button
+          class="ae-button"
+          type="button"
+          data-zoom-close
+          aria-label="Close screenshot"
+        >
+          <svg class="ae-icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <img class="msk-zoom-img" alt="" />
+    </dialog>
+
+    <script src="mode.js"></script>
+    <script src="marketing.js"></script>
+  </body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weave release notes</title>
+    <meta name="description" content="User-facing release notes for Weave." />
+    <script>
+      try {
+        var m = localStorage.getItem('ae-mode');
+        if (m === 'dark' || m === 'light') {
+          document.documentElement.classList.add(m);
+          document.documentElement.style.colorScheme = m;
+        }
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="aesthetic.css" />
+    <link rel="stylesheet" href="marketing.css" />
+  </head>
+  <body>
+    <svg aria-hidden="true" width="0" height="0" style="position: absolute">
+      <symbol id="i-layers" viewBox="0 0 24 24">
+        <path
+          d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"
+        />
+        <path
+          d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"
+        />
+        <path
+          d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"
+        />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </symbol>
+      <symbol id="i-circle-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+    </svg>
+
+    <div class="ae-screen ae-wide">
+      <header class="ae-bar msk-bar">
+        <a class="ae-logo" href="./" aria-label="Weave home">
+          <span class="ae-app-mark" aria-hidden="true">
+            <svg class="ae-icon" data-lucide="layers">
+              <use href="#i-layers" />
+            </svg>
+          </span>
+          <span class="ae-name">Weave</span>
+        </a>
+        <span class="msk-actions">
+          <nav class="ae-chrome msk-nav" aria-label="Site">
+            <a href="./">home</a>
+            <a href="changelog.html" aria-current="page">release notes</a>
+          </nav>
+          <button class="ae-mode" aria-label="toggle color mode">
+            <svg class="ae-icon ae-sun"><use href="#i-sun" /></svg>
+            <svg class="ae-icon ae-moon"><use href="#i-moon" /></svg>
+          </button>
+        </span>
+      </header>
+
+      <main class="ae-stage ae-stage-scroll">
+        <article class="ae-doc msk-page" aria-labelledby="release-notes-title">
+          <h1 id="release-notes-title">Release notes</h1>
+          <p class="ae-lede">
+            Weave doesn't cut tagged releases yet — it's a living set of
+            contracts and doctrine docs, not a versioned artifact. This page
+            is an honest stub: real, dated entries about what shipped, not a
+            Landmark-synthesized changelog. Landmark's user-facing
+            release-notes export (<code>landmark-902</code>) is live and
+            wired for repos with tagged release history; Weave will switch to
+            it the first time it cuts one.
+          </p>
+
+          <section class="msk-release">
+            <p class="ae-chrome">2026-07-04 - hub site launched</p>
+            <h2>Public site launched, with the family map</h2>
+            <ul>
+              <li>
+                Added this Misty Step branded public site: what Weave is, the
+                doctrine it owns, and a card for every product it composes
+                (Bitterblossom, Roster, Powder, Glass, Glance, Canary,
+                Crucible, Exocortex, Landmark).
+              </li>
+              <li>
+                Every capability claim on the home page is sourced from the
+                merged
+                <a
+                  href="https://github.com/misty-step/weave/blob/master/docs/the-five-faces.md"
+                  >five-faces coverage matrix</a
+                >
+                or, for products newer than that assessment, scoped to a plain
+                description with no invented grade.
+              </li>
+            </ul>
+            <p class="ae-status">
+              <svg class="ae-icon ae-ok" data-lucide="circle-check">
+                <use href="#i-circle-check" />
+              </svg>
+              <span class="ae-status-label"
+                >Evidence: GitHub Pages deploy from this repo's
+                <code>master</code>.</span
+              >
+            </p>
+          </section>
+
+          <section class="msk-release">
+            <p class="ae-chrome">2026-07-04 - stacked-diff discipline</p>
+            <h2>Stacked-diff review discipline adopted and proven</h2>
+            <ul>
+              <li>
+                Published <code>docs/stacked-diff-discipline.md</code>: how
+                agent lanes stack, restack, and merge dependent PRs on native
+                GitHub branches, without a platform dependency.
+              </li>
+              <li>
+                Proven on a real 2-PR stack, merged bottom-up, with the
+                mandatory
+                <code>git rev-list --left-right --count
+                master...origin/master</code>
+                closeout check reading <code>0 0</code> after the final merge.
+              </li>
+            </ul>
+          </section>
+
+          <section class="msk-release">
+            <p class="ae-chrome">2026-07-04 - fleet coverage matrix refreshed</p>
+            <h2>The five-faces matrix now covers the whole fleet</h2>
+            <ul>
+              <li>
+                Merged a fuller 11-repo assessment into
+                <code>docs/the-five-faces.md</code> — Bitterblossom, Powder,
+                Crucible, Cerberus, Landmark, Canary, Bastion, Harness-kit,
+                Aesthetic, Threshold, Cairn, Memory-engine, Curb, Counterspell,
+                and Standby all now have a directly-inspected row.
+              </li>
+              <li>
+                Two more real closures shipped the same day: a Memory-engine
+                MCP face and a Standby CLI face, both merged with green gates.
+              </li>
+            </ul>
+          </section>
+        </article>
+      </main>
+
+      <footer class="ae-bar msk-footer">
+        <p class="ae-chrome">Weave release notes are public by default.</p>
+        <nav class="ae-foot-links ae-chrome" aria-label="Footer">
+          <a
+            data-footer-link="github"
+            href="https://github.com/misty-step/weave"
+            >GitHub</a
+          >
+          <a data-footer-link="misty-step" href="https://mistystep.io"
+            >Misty Step</a
+          >
+        </nav>
+      </footer>
+    </div>
+
+    <script src="mode.js"></script>
+  </body>
+</html>
