@@ -46,45 +46,70 @@ Rules of construction:
 5. **SDK is the optional sixth face**, minted when a consumer needs to embed rather
    than call (canary's TS SDK is the exemplar).
 
-## Coverage matrix — evidence-based, 2026-07-02
+## Coverage matrix — evidence-based, refreshed 2026-07-04
 
-From the showcase evidence pass (cold demos, `a/showcase/`). ✓ proven · ◐ partial ·
-✗ missing · ? unverified this pass.
+From the showcase evidence pass (cold demos, `a/showcase/`) plus the 2026-07-03/04
+fleet re-assessment (`~/.factory-lanes/assess/`, `weave-013`). ✓ proven · ◐ partial ·
+✗ missing · n/a not applicable / not argued as a face for this tool. No `?` cells —
+every tool below has been directly inspected (source, routes, crate graph, or a
+live tool call) this pass, not carried over as "unverified."
 
-All `?` cells resolved by the 2026-07-02 fleet assessment (`~/.factory-lanes/assess/`).
-Skill column reads: in-repo / in harness-kit catalog — the split is the finding.
+SDK is the optional sixth face (rule 5) — only listed where a consumer-embed case
+has actually been argued; `n/a` elsewhere means no such case has been made, not that
+one was checked and rejected. Skill column reads: in-repo / in harness-kit catalog —
+the split is a standing finding, not new this pass.
 
-| Tool | Core | API | CLI | MCP | UI | Skill (repo / catalog) |
-|------|------|-----|-----|-----|----|----|
-| bitterblossom | ✓ | ✓ `bb serve` | ✓ `bb` | ✓ 9 tools, read-only by construction | ✓ noir-ledger (accepted 07-02) | ◐ / ✗ |
-| powder | ✓ | ✓ | ✓ | ✓ 15 tools | ✗ (backlog 006, Kanban) | ✓ / ✗ |
-| crucible | ✓ | ◐ adjudication server only | ✓ | ✓ 8 tools | ◐ adjudication panel only | ✓ / ✗ |
-| cerberus | ✓ | ✗ exception candidate (rule 2 memo owed) | ✓ | ✓ 3 tools | ✗ | ✓ (×2) / ✗ |
-| landmark | ✓ | ✗ named exception — RATIFIED 07-02 (rule 2's worked example) | ✓ + GH Action | ✗ (experiment later, after 007/010) | ✗ | ✗ / ✗ |
-| canary | ✓ | ✓ API-first + OpenAPI (+TS SDK) | ✓ | ✓ (052/057, mcp_stdio.rs) | ✗ gap (thesis revisit w/ operator) | ◐ name-drop / ✗ |
-| bastion | ✓ | ◐ healthz + per-app | ✓ `bastion status` | ✓ via cairn | ✓ via cairn | ✗ / ✗ |
-| harness-kit | ✓ | exception (ratified 07-02) | ✓ | experiment candidate (ticket owed) | ◐ bare docs site | ✓ (it ships skills) |
-| aesthetic | ✓ CSS kit v2.8.1 | kit exception: SDK (law/) + JSON feed instead | n/a | n/a | ✓ (site/) | ✗ / ✗ |
-| threshold | ✓ | law deferred until graduation (its 066) | ✓ only face | ✗ | ✗ | ✗ / ✗ |
-| weave organs (gazette, showcase) | ◐ scripts | ✗ | ◐ | ✗ | ✓ (they ARE pages) | ✗ |
+| Tool | Core | API | CLI | MCP | UI | Skill (repo / catalog) | SDK |
+|------|------|-----|-----|-----|----|----|-----|
+| bitterblossom | ✓ | ✓ `bb serve` | ✓ `bb` | ◐ 9 tools, read-only by construction (`backlog.d/_done/078`) | ✓ noir-ledger | ◐ / ✗ | ✗ |
+| powder | ✓ | ✓ `powder-api` | ✓ `powder-cli` | ✓ `powder-mcp` (15 tools, now MCP-over-HTTP) | ✗ (backlog 006, Kanban) | ✓ / ✗ | ✗ |
+| crucible | ✓ | ◐ localhost-only by design (`serve.rs`, `adjudication_server.rs`) | ✓ | ✓ 8 tools (`src/mcp.rs`) | ◐ adjudication panel only | ✓ (16k, not yet in catalog) / ✗ | ✗ |
+| cerberus | ✓ | ✗ exception candidate (rule 2 memo still owed) | ✓ | ✓ 3 tools | ✗ | ✓ (×2) / ✗ | n/a |
+| landmark | ✓ | ✗ named exception — RATIFIED 07-02 (rule 2's worked example) | ✓ + GH Action | ✗ (deliberate — `SKILL.md:45-48`, experiment later) | ✗ | ✓ / ✓ | ✓ crates.io (`cargo publish -p landmark`) |
+| canary | ✓ | ✓ API-first + OpenAPI | ✓ | ✓ `canary mcp-server` (stdio, shipped 07-01) | ✗ gap (thesis revisit w/ operator) | ◐ name-drop / ✗ | ◐ **built, DONE-pipeline** (`canary-051`, PR misty-step/canary#231 merged) — publish is a 5-min operator step (npm org + `NPM_TOKEN`), not a code gap |
+| bastion | ✓ | ◐ healthz + per-app | ✓ `bastion status` | ✓ via cairn | ✓ via cairn | ✗ / ✗ | n/a |
+| harness-kit | ✓ | exception (ratified 07-02) | ✓ | experiment candidate (ticket owed) | ◐ bare docs site | ✓ (it ships skills) | n/a |
+| aesthetic | ✓ CSS kit v2.8.1 | ◐ N-A by design, but ticket `aesthetic-021` wants `site/r/*.json` **named** as the API face in docs (undone) | ✗ deliberately sequenced after skill (`aesthetic-021`) | ✗ deliberately sequenced (`aesthetic-021`) | ✓ (site/) | ✓ (repo-local + catalog — closed; `aesthetic-021`'s claim it's still open is stale) | ◐ built (`package.json`, exports map), consumable via git-tag/CDN — **not on npm registry**, operator ruled the ambient 404 unacceptable 07-02, decision still pending (`aesthetic-021`) |
+| threshold | ✓ | law deferred until graduation (its 066) | ✓ only face | ✗ | ✗ | ✗ / ✗ | n/a |
+| weave organs (gazette, showcase) | ◐ scripts | ✗ | ◐ | ✗ | ✓ (they ARE pages) | ✗ | n/a |
+| cairn | ✓ | ✓ `axum::serve`, `Cmd::Serve` | ✓ `Cmd::Habit` | ✓ 7 tools, live-verified this pass (`mcp__cairn__*`) | ✓ `static/` PWA (manifest + service worker) | ✓ repo-local (describes all 4 faces) / ✗ | ✗ |
+| memory-engine | ✓ | ✓ `memory-engine-api` (accounts/sources/generate/review-flow/OpenAPI) | ◐ `memory-engine-cli` is a single dogfood-review harness (card 070), no clap/Subcommand operator surface yet | **✓ CLOSED this pass** — `memory-engine-mcp` (`memory-engine-071`, PR misty-step/memory-engine#31): 6 intent-shaped tools (create_deck/list_decks/invalidate_deck/list_due/review_next/submit_answer), cold-agent stdio transcript at `docs/dogfood/mcp-review-loop.md` | ✓ `memory-engine-web-shell` | ◐ only `.agents/skills/memory-engine-qa` (verification-oriented); no product-domain skill | ✗ |
+| curb | ✓ | ✗ no HTTP surface (`curb-core` is a library; `ui`/`src-tauri` is a desktop shell) | ✓ real `clap::Subcommand` | ✗ (curb *monitors* other apps' MCP servers; exposes none of its own) | ✓ `ui/` Tauri desktop shell | **✓ CLOSED earlier this pass** — `curb-905`, repo skill covering status/watch, cold-agent transcript | ✗ |
+| counterspell | ✓ | ✗ no server code | ✓ real `clap::Subcommand` (`src/cli.rs`) | ✗ | ◐ SwiftBar menubar plugin (`extras/swiftbar/counterspell.5m.sh`) only, not a full UI | ✗ not in catalog, no repo `SKILL.md` | ✗ |
+| standby | ✓ | ✓ `standbyd` axum `Router` (meetings/jobs/capture) | **✓ CLOSED this pass** — `standby-024`, PR misty-step/standby#10: `meetings list/show`, `proposals approve/ignore`, `capture start/stop`, `results open`, e2e receipt at `docs/evidence/cli-face/` | ✗ (VISION.md names it a future capability, not shipped) | ✓ React `ui/` (per `AGENTS.md`) | ✗ no `SKILL.md` | ✗ |
 
-**The skill-column verdict (hk lane, 07-02): zero real per-tool skills in the catalog
-for any fleet tool.** Tools carry their own SKILL.md in-repo; the distribution layer
-distributes none of them. First children of the adoption epic: author bb + landmark
-catalog skills.
+**Progress this pass (weave-013, 2026-07-04):** of the prior "top 5 highest-leverage
+closures," four are now shipped or pipeline-complete — memory-engine MCP (built),
+standby CLI (built), curb skill (built, closed earlier the same day), canary SDK
+(code + publish pipeline done, npm org creation is the sole remaining step and is an
+operator action, not an agent one — confirmed no local `NPM_TOKEN`/npm login exists
+to do it headlessly). Only aesthetic's SDK-publish decision remains genuinely open,
+and it is explicitly bundled with the same operator npm session as canary's.
+
+**The skill-column verdict (hk lane, 07-02, still true): zero real per-tool skills in
+the harness-kit catalog for any fleet tool.** Tools carry their own SKILL.md in-repo;
+the distribution layer distributes none of them. curb and cairn both closed their
+*repo-local* skill gap this week; the catalog side is untouched.
 
 Honest readings:
 
-- The **skill column is mostly unverified** — the showcase pass didn't audit
-  harness-kit's catalog for per-tool skills. First child of the adoption epic.
 - **canary's missing UI was previously defended as thesis** ("agents read it, humans
   don't"). Under this law it's a gap: a thin status/incident UI riding the existing
-  API. The API-first architecture makes it cheap.
-- **landmark and cerberus have no API face.** Whether each is a named exception (rule
-  2) or a gap is a per-repo decision for the epic, not a default.
+  API. The API-first architecture makes it cheap. Still open — not touched this pass.
+- **landmark and cerberus have no API face.** landmark's is a ratified exception;
+  cerberus's rule-2 memo is still owed — a gap, not yet a decision.
 - The **gazette and showcase** — the fleet's self-reporting organs — currently exist
-  as a script + hand-assembled artifacts. In their ultimate form they are Weave
-  organs (in this repo or as a distinct service) and subject to this same law.
+  as a script + hand-assembled artifacts, and per operator directive 2026-07-03 the
+  gazette is being collapsed into the Bridge rather than independently maturing its
+  own five faces (see weave `collapse-gazette-into-bridge` card) — treat this row as
+  transitional, not a stable target for face-closure work.
+- **curb, counterspell, and standby remain the least-covered tools** (1-2 solid faces
+  each even after this pass's closures) — proportionate to their youth, not neglect.
+  counterspell in particular has zero face-closure backlog filed beyond an icon
+  ticket; that absence is itself a finding, not evidence of a low bar.
+- **SDK/npm publication is the fleet's single most common remaining gap** even where
+  the code is done (canary, aesthetic both built-and-tested, both 404 on npm) — the
+  pattern is a packaging/operator-action gap, not an engineering one.
 
 ## Named exceptions (ratified)
 
