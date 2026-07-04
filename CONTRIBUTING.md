@@ -114,6 +114,24 @@ is done, leave it in place with `Status: done` — the backlog is the history.
 - Squash-merge. The commit subject is `docs: <summary>` or `chore: <summary>`.
 - The PR body names the goal, why, and verification. Agent attribution trailers
   go in the commit body when an agent authored the change.
+- For multi-PR features, use the
+  [stacked-diff discipline](docs/stacked-diff-discipline.md). The lower PR
+  targets `master`; each upper PR targets the previous stack branch. Every
+  stacked PR body names `Base`, `Depends on`, and `Merge order`, and the stack
+  merges bottom-up with a final `git rev-list --left-right --count
+  master...origin/master` check.
+
+### Stacked PR body header
+
+```markdown
+Stack:
+- [ ] 1. <lower PR> — <scope>
+- [ ] 2. <this PR> — <scope>
+
+Base: `<base-branch>`
+Depends on: <PR URL or "none">
+Merge order: bottom-up; rebase/restack upper PRs after each lower merge.
+```
 
 ## What does not belong here
 

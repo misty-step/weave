@@ -53,6 +53,11 @@ source of truth, extract `weave.remote_event.v1` as the host-neutral envelope,
 adopt stacked PR discipline, pilot `jj` locally, mirror to Forgejo/Gitea
 before any source-of-truth migration.
 
+When a feature needs multiple dependent PRs, read
+[stacked-diff discipline](stacked-diff-discipline.md). Stacks are native
+GitHub branch stacks here: explicit PR bases, ordinary rebase restacking, and
+bottom-up merge closeout.
+
 ## 6. Weave-owned contracts fully specified today
 
 Two Weave-owned schemas have complete definitions and fixtures:
