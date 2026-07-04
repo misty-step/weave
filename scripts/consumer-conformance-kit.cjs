@@ -40,6 +40,13 @@ const WEAVE_SCHEMAS = [
   'weave.release_feed_row.v1',
 ];
 
+const INVALID_MARKERS = [
+  'missing-schema-version',
+  'unknown-major',
+  'status-in-progress',
+  'missing-host-payload',
+];
+
 let failures = 0;
 let checks = 0;
 
@@ -66,7 +73,7 @@ for (const version of WEAVE_SCHEMAS) {
 
   // 1. A valid fixture must pass.
   const validFixtures = readdirSync(fixtureDir)
-    .filter(f => f.startsWith(version + '.') && !f.includes('missing-schema-version') && !f.includes('unknown-major') && !f.includes('status-in-progress'));
+    .filter(f => f.startsWith(version + '.') && !INVALID_MARKERS.some(marker => f.includes(marker)));
   for (const ff of validFixtures) {
     const data = JSON.parse(readFileSync(join(fixtureDir, ff), 'utf8'));
     const valid = validate(data);

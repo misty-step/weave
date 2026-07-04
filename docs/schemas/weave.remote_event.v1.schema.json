@@ -12,10 +12,12 @@
     "occurred_at",
     "correlation_id",
     "source",
+    "repository",
     "subject",
     "actor",
     "action",
     "idempotency_key",
+    "host_payload",
     "payload"
   ],
   "properties": {
@@ -23,8 +25,7 @@
       "const": "weave.remote_event.v1"
     },
     "id": {
-      "type": "string",
-      "minLength": 1,
+      "$ref": "#/$defs/non_empty_string",
       "description": "Adapter-generated event id. Stable for one normalized event record."
     },
     "producer": {
@@ -35,19 +36,18 @@
       ],
       "properties": {
         "name": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string"
         },
         "version": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string"
         }
       },
       "additionalProperties": false
     },
     "produced_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Time the adapter produced this normalized envelope."
     },
     "occurred_at": {
       "type": "string",
@@ -55,13 +55,13 @@
       "description": "Best host/native event timestamp. If the host has no event timestamp, use the adapter receipt time and preserve that fact in payload."
     },
     "correlation_id": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/non_empty_string"
     },
     "source": {
       "type": "object",
       "required": [
         "kind",
+        "host",
         "external_id"
       ],
       "properties": {
@@ -83,11 +83,46 @@
             "harness-kit"
           ]
         },
+        "host": {
+          "$ref": "#/$defs/non_empty_string",
+          "description": "Host name that emitted the native event, for example github.com."
+        },
         "external_id": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string",
+          "description": "Host delivery id, event id, hook id, or equivalent native identifier."
         },
         "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "repository": {
+      "type": "object",
+      "required": [
+        "id",
+        "full_name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "full_name": {
+          "$ref": "#/$defs/repo_full_name"
+        },
+        "default_branch": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "html_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "api_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "clone_url": {
           "type": "string",
           "format": "uri"
         }
@@ -97,31 +132,41 @@
     "subject": {
       "type": "object",
       "required": [
-        "repo",
         "kind",
         "id"
       ],
       "properties": {
-        "repo": {
-          "type": "string",
-          "pattern": "^[^/]+/[^/]+$"
-        },
         "kind": {
           "type": "string",
           "enum": [
             "pull_request",
+            "push",
+            "check_run",
+            "workflow_run",
+            "deployment",
+            "release",
+            "issue",
+            "comment",
             "change",
             "card",
             "incident",
             "run",
-            "release",
             "benchmark",
             "agent_config"
           ]
         },
         "id": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ref": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "sha": {
+          "$ref": "#/$defs/sha"
         },
         "url": {
           "type": "string",
@@ -138,12 +183,10 @@
       ],
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string"
         },
         "login": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/non_empty_string"
         },
         "kind": {
           "type": "string",
@@ -159,18 +202,123 @@
       "additionalProperties": false
     },
     "action": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Normalized action within the subject kind, for example opened, synchronized, closed, labeled, check_completed, deployed, or released."
+      "$ref": "#/$defs/non_empty_string",
+      "description": "Normalized action within the subject kind, for example opened, synchronize, push, completed, success, or published."
     },
     "idempotency_key": {
-      "type": "string",
-      "minLength": 1,
+      "$ref": "#/$defs/non_empty_string",
       "description": "Stable dedupe key chosen by the adapter from host delivery id plus subject/action revision."
+    },
+    "host_payload": {
+      "type": "object",
+      "required": [
+        "event_name",
+        "delivery_id",
+        "links"
+      ],
+      "properties": {
+        "event_name": {
+          "$ref": "#/$defs/non_empty_string",
+          "description": "Native host event name, for example pull_request, push, check_run, workflow_run, deployment_status, release, issues, or issue_comment."
+        },
+        "delivery_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "api_version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "raw_payload_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "links": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "rel",
+              "href"
+            ],
+            "properties": {
+              "rel": {
+                "type": "string",
+                "enum": [
+                  "html",
+                  "api",
+                  "diff",
+                  "patch",
+                  "compare",
+                  "commits",
+                  "checks",
+                  "logs",
+                  "delivery",
+                  "payload",
+                  "release",
+                  "workflow_run",
+                  "deployment",
+                  "status"
+                ]
+              },
+              "href": {
+                "type": "string",
+                "format": "uri"
+              },
+              "media_type": {
+                "$ref": "#/$defs/non_empty_string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "merge_policy"
+      ],
+      "properties": {
+        "merge_policy": {
+          "type": "string",
+          "enum": [
+            "agent-mergeable",
+            "human-review"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "reason": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "payload": {
       "type": "object",
-      "description": "Adapter-owned normalized details. It may retain selected native ids, labels, refs, SHAs, or check names, but must not carry secrets, private local paths, or tailnet-only hostnames."
+      "description": "Adapter-owned normalized details. It may retain selected native ids, labels, refs, SHAs, statuses, or check names, but must not carry secrets, private local paths, or tailnet-only hostnames."
+    }
+  },
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo_full_name": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    },
+    "sha": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{7,64}$"
     }
   },
   "additionalProperties": false

@@ -1,0 +1,65 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_issue_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:40:02Z",
+  "occurred_at": "2026-07-03T19:40:00Z",
+  "correlation_id": "github:misty-step/weave:issue:44:opened",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-issue-0001",
+    "url": "https://github.com/misty-step/weave/issues/44"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "issue",
+    "id": "440044",
+    "number": 44,
+    "url": "https://github.com/misty-step/weave/issues/44"
+  },
+  "actor": {
+    "id": "github-user-101",
+    "login": "operator",
+    "kind": "user"
+  },
+  "action": "opened",
+  "idempotency_key": "github:delivery-issue-0001:issue:44:opened",
+  "host_payload": {
+    "event_name": "issues",
+    "delivery_id": "delivery-issue-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/weave/issues/44"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/issues/44"
+      }
+    ]
+  },
+  "policy": {
+    "merge_policy": "human-review",
+    "source": "issue-triage",
+    "reason": "issue events can propose work but must not authorize merge"
+  },
+  "payload": {
+    "state": "open",
+    "title": "Review remote-event consumer adoption",
+    "labels": [
+      "follow-up"
+    ]
+  }
+}

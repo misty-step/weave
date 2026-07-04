@@ -1,0 +1,62 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_deployment_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:15:01Z",
+  "occurred_at": "2026-07-03T19:14:58Z",
+  "correlation_id": "github:misty-step/weave:deployment:445566:success",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-deployment-0001",
+    "url": "https://github.com/misty-step/weave/deployments/activity_log?environment=production"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "deployment",
+    "id": "445566",
+    "sha": "9f1c0de0000000000000000000000000000000000",
+    "url": "https://github.com/misty-step/weave/deployments/activity_log?environment=production"
+  },
+  "actor": {
+    "id": "github-app-15368",
+    "login": "github-actions",
+    "kind": "app"
+  },
+  "action": "success",
+  "idempotency_key": "github:delivery-deployment-0001:deployment:445566:success",
+  "host_payload": {
+    "event_name": "deployment_status",
+    "delivery_id": "delivery-deployment-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "deployment",
+        "href": "https://api.github.com/repos/misty-step/weave/deployments/445566"
+      },
+      {
+        "rel": "status",
+        "href": "https://api.github.com/repos/misty-step/weave/deployments/445566/statuses/1"
+      },
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/weave/deployments/activity_log?environment=production"
+      }
+    ]
+  },
+  "payload": {
+    "environment": "production",
+    "state": "success",
+    "target_url": "https://weave.example.invalid/"
+  }
+}

@@ -24,19 +24,32 @@ adapters normalize native webhooks into this contract before any Weave consumer
 touches them.
 
 Required fields: `schema_version`, `id`, `producer`, `produced_at`,
-`occurred_at`, `correlation_id`, `source` (`kind`, `external_id`), `subject`
-(`repo`, `kind`, `id`), `actor` (`id`, `login`), `action`, `idempotency_key`,
-`payload`.
+`occurred_at`, `correlation_id`, `source` (`kind`, `host`, `external_id`),
+`repository` (`id`, `full_name`), `subject` (`kind`, `id`), `actor` (`id`,
+`login`), `action`, `idempotency_key`, `host_payload` (`event_name`,
+`delivery_id`, `links`), `payload`.
 
 Fixtures: `docs/fixtures/contracts/weave.remote_event.v1.github-pr-opened.json`,
-`weave.remote_event.v1.forgejo-pr-opened.json`, `weave.remote_event.v1.minimal.json`.
+`weave.remote_event.v1.github-pr-opened-from-webhook.json`,
+`weave.remote_event.v1.github-push.json`,
+`weave.remote_event.v1.github-check-run-completed.json`,
+`weave.remote_event.v1.github-workflow-run-completed.json`,
+`weave.remote_event.v1.github-deployment-success.json`,
+`weave.remote_event.v1.github-release-published.json`,
+`weave.remote_event.v1.github-issue-opened.json`,
+`weave.remote_event.v1.github-issue-comment-created.json`,
+`weave.remote_event.v1.forgejo-pr-opened.json`, and
+`weave.remote_event.v1.minimal.json`.
 
 **Contract test:** a GitHub PR-open fixture and a Forgejo/Gitea fixture
 normalize to the same contract and trigger the same dry-run BB decision.
 Consumers reject events with `schema_version` ≠ `weave.remote_event.v1` and
 surface the unsupported version. See the
 [consumer conformance kit](consumer-conformance-kit.md) for a runnable
-starting point.
+starting point. The Weave gate also runs
+`scripts/remote-event-conformance.cjs`, which checks fixture coverage for PR,
+push, check, workflow, deployment, release, issue, and comment events and
+verifies a raw GitHub webhook fixture maps to the normalized envelope.
 
 ---
 

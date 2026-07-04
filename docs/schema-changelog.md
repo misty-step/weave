@@ -19,8 +19,14 @@ Forgejo/Gitea, and Gerrit adapters normalize native webhooks into this
 contract before BB, Cerberus, Landmark, or Canary consume them.
 
 **Fields:** `schema_version`, `id`, `producer`, `produced_at`, `occurred_at`,
-`correlation_id`, `source` (kind, external_id, url), `subject` (repo, kind,
-id, url), `actor` (id, login, kind), `action`, `idempotency_key`, `payload`.
+`correlation_id`, `source` (kind, host, external_id, url), `repository` (id,
+full_name, default_branch, urls), `subject` (kind, id, number, ref, sha, url),
+`actor` (id, login, kind), `action`, `idempotency_key`, `host_payload`
+(event_name, delivery_id, links), optional `policy.merge_policy`, `payload`.
+
+**Updated:** 2026-07-04 · `weave-017` tightened the v1 envelope around explicit
+source host, repository identity, host-payload links, GitHub event-family
+fixtures, and the raw GitHub webhook projection check.
 
 ---
 

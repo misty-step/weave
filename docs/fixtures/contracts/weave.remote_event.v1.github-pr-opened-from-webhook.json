@@ -1,0 +1,77 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_72d3162e_cc78_11ef_9cd2_0242ac120002",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T20:13:07Z",
+  "occurred_at": "2026-07-03T20:13:04Z",
+  "correlation_id": "github:octo-org/Hello-World:pull_request:1347:opened",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "72d3162e-cc78-11ef-9cd2-0242ac120002",
+    "url": "https://github.com/octo-org/Hello-World/pull/1347"
+  },
+  "repository": {
+    "id": "1296269",
+    "full_name": "octo-org/Hello-World",
+    "default_branch": "main",
+    "html_url": "https://github.com/octo-org/Hello-World",
+    "api_url": "https://api.github.com/repos/octo-org/Hello-World",
+    "clone_url": "https://github.com/octo-org/Hello-World.git"
+  },
+  "subject": {
+    "kind": "pull_request",
+    "id": "2401925555",
+    "number": 1347,
+    "url": "https://github.com/octo-org/Hello-World/pull/1347"
+  },
+  "actor": {
+    "id": "17291442",
+    "login": "codex-worker",
+    "kind": "bot"
+  },
+  "action": "opened",
+  "idempotency_key": "github:72d3162e-cc78-11ef-9cd2-0242ac120002:pull_request:1347:opened:b0b1f9a000000000000000000000000000000000",
+  "host_payload": {
+    "event_name": "pull_request",
+    "delivery_id": "72d3162e-cc78-11ef-9cd2-0242ac120002",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/octo-org/Hello-World/pull/1347"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/octo-org/Hello-World/pulls/1347"
+      },
+      {
+        "rel": "diff",
+        "href": "https://github.com/octo-org/Hello-World/pull/1347.diff"
+      },
+      {
+        "rel": "patch",
+        "href": "https://github.com/octo-org/Hello-World/pull/1347.patch"
+      }
+    ]
+  },
+  "policy": {
+    "merge_policy": "agent-mergeable",
+    "source": "branch-prefix",
+    "reason": "codex/* head branch is eligible for agent merge when required checks pass",
+    "labels": [
+      "agent-authored"
+    ]
+  },
+  "payload": {
+    "base_ref": "main",
+    "head_ref": "codex/remote-event-envelope",
+    "head_sha": "b0b1f9a000000000000000000000000000000000",
+    "draft": false,
+    "state": "open",
+    "title": "Add host neutral remote event envelope"
+  }
+}

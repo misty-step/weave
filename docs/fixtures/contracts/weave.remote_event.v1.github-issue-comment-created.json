@@ -1,0 +1,63 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_issue_comment_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:45:02Z",
+  "occurred_at": "2026-07-03T19:45:00Z",
+  "correlation_id": "github:misty-step/weave:issue_comment:3005:created",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-issue-comment-0001",
+    "url": "https://github.com/misty-step/weave/pull/17#issuecomment-3005"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "comment",
+    "id": "3005",
+    "number": 17,
+    "url": "https://github.com/misty-step/weave/pull/17#issuecomment-3005"
+  },
+  "actor": {
+    "id": "github-user-101",
+    "login": "operator",
+    "kind": "user"
+  },
+  "action": "created",
+  "idempotency_key": "github:delivery-issue-comment-0001:issue_comment:3005:created",
+  "host_payload": {
+    "event_name": "issue_comment",
+    "delivery_id": "delivery-issue-comment-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://github.com/misty-step/weave/pull/17#issuecomment-3005"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/issues/comments/3005"
+      }
+    ]
+  },
+  "policy": {
+    "merge_policy": "human-review",
+    "source": "comment-command",
+    "reason": "operator comment requested human review"
+  },
+  "payload": {
+    "issue_number": 17,
+    "issue_kind": "pull_request",
+    "body_excerpt": "Please hold for human review."
+  }
+}

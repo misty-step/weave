@@ -1,0 +1,64 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_workflow_run_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:08:05Z",
+  "occurred_at": "2026-07-03T19:08:00Z",
+  "correlation_id": "github:misty-step/weave:workflow_run:910011:completed",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-workflow-run-0001",
+    "url": "https://github.com/misty-step/weave/actions/runs/910011"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "workflow_run",
+    "id": "910011",
+    "sha": "9f1c0de0000000000000000000000000000000000",
+    "url": "https://github.com/misty-step/weave/actions/runs/910011"
+  },
+  "actor": {
+    "id": "github-user-17",
+    "login": "codex-weave-017",
+    "kind": "bot"
+  },
+  "action": "completed",
+  "idempotency_key": "github:delivery-workflow-run-0001:workflow_run:910011:completed:success",
+  "host_payload": {
+    "event_name": "workflow_run",
+    "delivery_id": "delivery-workflow-run-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "workflow_run",
+        "href": "https://github.com/misty-step/weave/actions/runs/910011"
+      },
+      {
+        "rel": "api",
+        "href": "https://api.github.com/repos/misty-step/weave/actions/runs/910011"
+      },
+      {
+        "rel": "logs",
+        "href": "https://api.github.com/repos/misty-step/weave/actions/runs/910011/logs"
+      }
+    ]
+  },
+  "payload": {
+    "workflow_name": "verify",
+    "status": "completed",
+    "conclusion": "success",
+    "head_branch": "codex/weave-017-remote-event-envelope",
+    "head_sha": "9f1c0de0000000000000000000000000000000000"
+  }
+}

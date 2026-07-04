@@ -47,15 +47,29 @@ has a stricter public schema:
   "correlation_id": "repo:subject:attempt",
   "source": {
     "kind": "github|gitlab|forgejo|gitea|gerrit|powder|canary|bb|cerberus|crucible|threshold|landmark|harness-kit",
+    "host": "github.com",
     "external_id": "host-specific-id",
     "url": "https://example.invalid/item"
   },
+  "repository": {
+    "id": "repo-id",
+    "full_name": "owner/name"
+  },
   "subject": {
-    "repo": "owner/name",
-    "kind": "pull_request|change|card|incident|run|release|benchmark|agent_config",
+    "kind": "pull_request|push|check_run|workflow_run|deployment|release|comment|change|card|incident|run|benchmark|agent_config",
     "id": "subject-id"
   },
   "idempotency_key": "stable-dedupe-key",
+  "host_payload": {
+    "event_name": "pull_request",
+    "delivery_id": "host-delivery-id",
+    "links": [
+      {
+        "rel": "html",
+        "href": "https://example.invalid/item"
+      }
+    ]
+  },
   "payload": {}
 }
 ```
@@ -174,4 +188,5 @@ This draft satisfies the first contract-design slice when:
 The Weave-owned schema (`weave.remote_event.v1`) is exercised by
 `./scripts/verify.sh`, which validates valid fixtures (must pass) and invalid
 fixtures (missing `schema_version`, unknown major — must be rejected) against
-the schema. Piece-owned schemas are validated in their producer repos.
+the schema, then runs remote-event-specific conformance for GitHub projection
+coverage. Piece-owned schemas are validated in their producer repos.

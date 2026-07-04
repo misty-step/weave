@@ -1,0 +1,62 @@
+{
+  "schema_version": "weave.remote_event.v1",
+  "id": "evt_github_push_0001",
+  "producer": {
+    "name": "github-adapter",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-03T19:00:03Z",
+  "occurred_at": "2026-07-03T19:00:00Z",
+  "correlation_id": "github:misty-step/weave:push:refs/heads/master",
+  "source": {
+    "kind": "github",
+    "host": "github.com",
+    "external_id": "delivery-push-0001",
+    "url": "https://github.com/misty-step/weave/compare/16b00b0000000000000000000000000000000000...9f1c0de0000000000000000000000000000000000"
+  },
+  "repository": {
+    "id": "github-repo-920017",
+    "full_name": "misty-step/weave",
+    "default_branch": "master",
+    "html_url": "https://github.com/misty-step/weave",
+    "api_url": "https://api.github.com/repos/misty-step/weave",
+    "clone_url": "https://github.com/misty-step/weave.git"
+  },
+  "subject": {
+    "kind": "push",
+    "id": "refs/heads/master",
+    "ref": "refs/heads/master",
+    "sha": "9f1c0de0000000000000000000000000000000000",
+    "url": "https://github.com/misty-step/weave/compare/16b00b0000000000000000000000000000000000...9f1c0de0000000000000000000000000000000000"
+  },
+  "actor": {
+    "id": "github-user-101",
+    "login": "operator",
+    "kind": "user"
+  },
+  "action": "push",
+  "idempotency_key": "github:delivery-push-0001:push:refs/heads/master:9f1c0de0000000000000000000000000000000000",
+  "host_payload": {
+    "event_name": "push",
+    "delivery_id": "delivery-push-0001",
+    "api_version": "2022-11-28",
+    "links": [
+      {
+        "rel": "compare",
+        "href": "https://github.com/misty-step/weave/compare/16b00b0000000000000000000000000000000000...9f1c0de0000000000000000000000000000000000"
+      },
+      {
+        "rel": "commits",
+        "href": "https://api.github.com/repos/misty-step/weave/commits?sha=master"
+      }
+    ]
+  },
+  "payload": {
+    "before": "16b00b0000000000000000000000000000000000",
+    "after": "9f1c0de0000000000000000000000000000000000",
+    "ref": "refs/heads/master",
+    "created": false,
+    "deleted": false,
+    "forced": false
+  }
+}
