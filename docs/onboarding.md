@@ -72,7 +72,15 @@ Read [CONTRIBUTING.md](../CONTRIBUTING.md). The short version: one PR per
 coherent slice, validate your fixtures, update the seam reference when you
 change a contract, never commit secrets or instance data.
 
-## 8. The backlog
+## 8. Asking the operator
+
+Read [request-input context](request-input-context.md) before posting a Powder
+`request_input` that will show up in the Bridge NEEDS YOU queue. The operator
+should be able to answer from the sheet alone: decision, why it needs them,
+options, recommendation, consequence, and evidence all travel in the
+elicitation payload.
+
+## 9. The backlog
 
 Read [backlog.d/](../backlog.d/). Each file is a ticket with a goal, an oracle
 (checkable acceptance criteria), and notes. Pick an unblocked ticket and work

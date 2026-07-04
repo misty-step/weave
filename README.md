@@ -20,6 +20,7 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [SDLC organ promotion criteria](docs/sdlc-organ-promotion.md) — how organs are minted (and why Cerberus is still advisory).
 - [Doc-sync flow](docs/doc-sync-flow.md) — the doc-drift maintenance loop (backlog 005).
 - [CI-auditor flow](docs/ci-auditor-flow.md) — the gate-improvement maintenance loop (backlog 006).
+- [Request-input context standard](docs/request-input-context.md) — the minimum packet for Bridge NEEDS YOU questions.
 - [Remote event schema](docs/schemas/weave.remote_event.v1.schema.json) — host-neutral event envelope.
 - [Work item proposal schema](docs/schemas/weave.work_item_proposal.v1.schema.json) — triage→Powder proposal envelope.
 - [Schema changelog](docs/schema-changelog.md) — version history for Weave-owned contracts.
