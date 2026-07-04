@@ -1,0 +1,32 @@
+{
+  "schema_version": "powder.card_event.v1",
+  "event_id": "evt-weave-completed",
+  "event_type": "completed",
+  "occurred_at": 1783137720,
+  "actor": "operator",
+  "card": {
+    "id": "weave-thread-fixture-recorded-001",
+    "title": "Replay Canary incident loop through Powder and Landmark",
+    "body": "https://canary.example.invalid/incidents/INC-hwe7en7qbxr0/triage",
+    "acceptance": ["complete the cross-repo replay thread"],
+    "status": "done",
+    "priority": "p2",
+    "labels": ["weave-906", "incident-loop", "fixture"],
+    "assignee": null,
+    "related": [],
+    "blocks": [],
+    "blocked_by": [],
+    "repo": "misty-step/weave",
+    "workspace_path": null,
+    "branch_name": null,
+    "source": null,
+    "claim": null,
+    "created_at": 1783137600,
+    "updated_at": 1783137720
+  },
+  "change": {
+    "previous_status": "ready",
+    "status": "done",
+    "proof": "weave-906 fixture capture complete"
+  }
+}

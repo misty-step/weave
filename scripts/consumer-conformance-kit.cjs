@@ -37,6 +37,7 @@ const fixtureDir = join(root, 'docs', 'fixtures', 'contracts');
 const WEAVE_SCHEMAS = [
   'weave.remote_event.v1',
   'weave.work_item_proposal.v1',
+  'weave.release_feed_row.v1',
 ];
 
 let failures = 0;

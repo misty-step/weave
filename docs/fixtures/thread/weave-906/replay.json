@@ -1,0 +1,35 @@
+{
+  "thread": "weave-906-child-4",
+  "canary_incident": {
+    "source_doc": "misty-step/canary#230 docs/architecture/agent-loop-write-surface-incident-loop-2026-07-04.md",
+    "service": "loop-api",
+    "incident_id": "INC-hwe7en7qbxr0",
+    "claim_id": "CLM-2m20vkapkbda",
+    "timeline": [
+      "incident.opened",
+      "remediation_claim.created",
+      "annotation.added",
+      "remediation_claim.released"
+    ]
+  },
+  "proposal_fixture": "docs/fixtures/contracts/weave.work_item_proposal.v1.weave-906-canary-incident.json",
+  "card_event_fixtures": [
+    "docs/fixtures/contracts/powder.card_event.v1.card-created.json",
+    "docs/fixtures/contracts/powder.card_event.v1.moved-to-ready.json",
+    "docs/fixtures/contracts/powder.card_event.v1.completed.json"
+  ],
+  "release_event_fixture": "docs/fixtures/contracts/landmark.release-kit.v1.thread-release.json",
+  "feed_row_fixture": "docs/fixtures/contracts/weave.release_feed_row.v1.landmark-release-kit.json",
+  "expected": {
+    "proposal_source_kind": "canary",
+    "proposal_subject_kind": "incident",
+    "card_id": "weave-thread-fixture-recorded-001",
+    "card_lifecycle": ["card-created", "moved-to-ready", "completed"],
+    "release_repository": "misty-step/weave",
+    "release_version": "v0.1.0-weave-thread"
+  },
+  "stubs": [
+    "bb dispatch hop is simulated by direct Powder card lifecycle fixtures until powder-008 lands",
+    "Canary is not stood up; incident shape is fixture-derived from canary#230 conformance receipt"
+  ]
+}

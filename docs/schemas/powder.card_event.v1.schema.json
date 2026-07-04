@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/misty-step/weave/blob/master/docs/schemas/powder.card_event.v1.schema.json",
+  "title": "Powder Card Event v1",
+  "description": "Pinned Weave integration snapshot of Powder's powder.card_event.v1 outbound event face. Source: misty-step/powder docs/card-events-v1.md from the merged powder#51 event contract.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "actor",
+    "card",
+    "change"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "powder.card_event.v1"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "card-created",
+        "moved-to-ready",
+        "awaiting-input",
+        "claim-expired",
+        "completed",
+        "comment-added"
+      ]
+    },
+    "occurred_at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Unix timestamp in seconds, matching Powder's durable event payload."
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "card": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "acceptance",
+        "status",
+        "priority",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" },
+        "acceptance": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "status": { "type": "string", "minLength": 1 },
+        "priority": { "type": "string", "minLength": 1 },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "assignee": {
+          "type": ["string", "null"]
+        },
+        "related": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blocked_by": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "repo": {
+          "type": ["string", "null"]
+        },
+        "workspace_path": {
+          "type": ["string", "null"]
+        },
+        "branch_name": {
+          "type": ["string", "null"]
+        },
+        "source": {
+          "type": ["object", "null"]
+        },
+        "claim": {
+          "type": ["object", "null"]
+        },
+        "created_at": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "updated_at": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "change": {
+      "type": "object",
+      "description": "Event-specific change object. Powder documents stable keys per event_type but may add optional fields within v1."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "moved-to-ready" }
+        }
+      },
+      "then": {
+        "properties": {
+          "card": {
+            "properties": {
+              "status": { "const": "ready" }
+            }
+          },
+          "change": {
+            "required": ["status"],
+            "properties": {
+              "status": { "const": "ready" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "completed" }
+        }
+      },
+      "then": {
+        "properties": {
+          "change": {
+            "required": ["status"],
+            "properties": {
+              "status": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

@@ -18,12 +18,12 @@ CACHE_DIR="$TMPDIR_BASE/weave-verify-cache"
 
 # --- JSON well-formedness -----------------------------------------------------
 echo "==> Checking JSON well-formedness"
-for f in "$ROOT"/docs/schemas/*.json "$ROOT"/docs/fixtures/contracts/*.json; do
+while IFS= read -r f; do
   if ! jq empty "$f" 2>/dev/null; then
     echo "  FAIL  invalid JSON: $f"
     exit 1
   fi
-done
+done < <(find "$ROOT/docs/schemas" "$ROOT/docs/fixtures" -type f -name '*.json' | sort)
 echo "  OK    all JSON files are well-formed"
 
 # --- Secret / instance-data scan ---------------------------------------------
@@ -40,14 +40,14 @@ FORBIDDEN_PATTERNS=(
 )
 
 FOUND=0
-for f in "$ROOT"/docs/fixtures/contracts/*.json; do
+while IFS= read -r f; do
   for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
     if grep -qiE "$pattern" "$f"; then
       echo "  FAIL  $f matches forbidden pattern '$pattern'"
       FOUND=1
     fi
   done
-done
+done < <(find "$ROOT/docs/fixtures" -type f -name '*.json' | sort)
 if [ "$FOUND" -ne 0 ]; then
   exit 1
 fi
@@ -67,6 +67,10 @@ NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/validate-contracts.cjs" 
 # --- Consumer conformance kit ------------------------------------------------
 echo "==> Running consumer conformance kit"
 NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/consumer-conformance-kit.cjs" "$ROOT"
+
+# --- Cross-repo thread replay -------------------------------------------------
+echo "==> Replaying weave-906 cross-repo thread"
+NODE_PATH="$CACHE_DIR/node_modules" node "$ROOT/scripts/thread-replay.cjs" "$ROOT"
 
 # --- Rust app checks ----------------------------------------------------------
 if [ -f "$ROOT/Cargo.toml" ]; then

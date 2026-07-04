@@ -1,0 +1,38 @@
+{
+  "schema_version": "weave.work_item_proposal.v1",
+  "id": "proposal_weave_906_inc_hwe7en7qbxr0",
+  "producer": {
+    "name": "bb-triage-workload",
+    "version": "0.1.0"
+  },
+  "produced_at": "2026-07-04T05:12:00Z",
+  "correlation_id": "canary:misty-step/weave:incident:INC-hwe7en7qbxr0:triage",
+  "source": {
+    "kind": "canary",
+    "external_id": "INC-hwe7en7qbxr0",
+    "url": "https://canary.example.invalid/incidents/INC-hwe7en7qbxr0"
+  },
+  "subject": {
+    "repo": "misty-step/weave",
+    "kind": "incident",
+    "id": "INC-hwe7en7qbxr0"
+  },
+  "idempotency_key": "canary:INC-hwe7en7qbxr0:proposal:weave-thread-fixture",
+  "proposed_card": {
+    "title": "Replay Canary incident loop through Powder and Landmark",
+    "description_ref": "https://canary.example.invalid/incidents/INC-hwe7en7qbxr0/triage",
+    "priority": "P2",
+    "labels": ["weave-906", "incident-loop", "fixture"]
+  },
+  "status": "proposed",
+  "payload": {
+    "service": "loop-api",
+    "claim_id": "CLM-2m20vkapkbda",
+    "timeline_events": [
+      "incident.opened",
+      "remediation_claim.created",
+      "annotation.added",
+      "remediation_claim.released"
+    ]
+  }
+}

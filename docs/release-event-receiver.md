@@ -28,6 +28,7 @@ The app accepts two event shapes:
 
 Each stored line is a JSON object with:
 
+- `schema_version` — `weave.release_feed_row.v1`.
 - `received_at` — server timestamp.
 - `kind` — `landmark_webhook` or `landmark_release_kit`.
 - `repository`, `version`, `release_url` — indexed feed fields.
