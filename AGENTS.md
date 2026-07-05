@@ -27,6 +27,10 @@ themselves are still hardened standalone in their own repos.
   SDLC-organ promotion criteria, doc-sync flow.
 - `apps/release-events/` — public Landmark release-event receiver for the
   Bridge feed, deployed as its own Fly app.
+- `apps/fleet-retro/` — daily/weekly/arbitrary-window agent-activity retro
+  generator; see `docs/fleet-retro.md`.
+- `apps/weave-mcp/` — read-only MCP server over fleet-retro and
+  release-events; see `.agents/skills/weave-mcp/SKILL.md`.
 - `backlog.d/` — numbered backlog items driving this repo's own work.
 
-No repo-local `.agents/skills/` present.
+Repo-local skills: `.agents/skills/weave-mcp/`.

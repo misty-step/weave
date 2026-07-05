@@ -1392,6 +1392,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "weave-mcp"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tempfile",
+ "ureq",
+]
+
+[[package]]
 name = "weave-release-events"
 version = "0.1.0"
 dependencies = [
