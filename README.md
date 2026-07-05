@@ -27,5 +27,6 @@ Status: pre-composition. The pieces are being hardened standalone; the loop is t
 - [Schema changelog](docs/schema-changelog.md) — version history for Weave-owned contracts.
 - [Consumer conformance kit](docs/consumer-conformance-kit.md) — runnable starting point for consumer-side contract tests.
 - [Release event receiver](docs/release-event-receiver.md) — public Landmark webhook ingress for the Bridge feed.
+- [Fleet retro](docs/fleet-retro.md) — daily/weekly/arbitrary-window agent-activity retro, pushed to the Bridge feed and rendered on the artifact shelf.
 
 New here? Start with [onboarding](docs/onboarding.md). Contributing? Read [CONTRIBUTING.md](CONTRIBUTING.md).
