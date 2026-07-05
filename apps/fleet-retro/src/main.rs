@@ -240,6 +240,14 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         .with_context(|| format!("creating output dir {}", out_dir.display()))?;
     std::fs::write(out_dir.join("index.html"), &html)
         .with_context(|| format!("writing {}/index.html", out_dir.display()))?;
+    // Structured sibling to index.html so a consumer (weave-mcp's
+    // get_latest_fleet_retro tool, or any future data surface) can read the
+    // assembled evidence directly instead of scraping rendered HTML.
+    std::fs::write(
+        out_dir.join("spec.json"),
+        serde_json::to_string_pretty(&retro_spec)?,
+    )
+    .with_context(|| format!("writing {}/spec.json", out_dir.display()))?;
     publish::vendor_aesthetic_css(&out_dir, home)?;
     println!("{}", out_dir.join("index.html").display());
 
