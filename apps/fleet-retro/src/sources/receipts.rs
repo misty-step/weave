@@ -105,6 +105,10 @@ fn extract_excerpt(body: &str, title: &str) -> String {
         .skip_while(|line| line.trim() == title_line)
         .collect::<Vec<_>>()
         .join(" ");
+    // Strip Markdown syntax before truncating -- doing this after would let
+    // a `**bold**` marker survive as a literal asterisk, or worse, split it
+    // in half (found live: a receipt excerpt rendered `**Delivery = two-phas…`).
+    let after_title = crate::text::plain_text(&after_title);
     let words: Vec<&str> = after_title.split_whitespace().collect();
     if words.len() <= EXCERPT_WORD_LIMIT {
         words.join(" ")
@@ -280,6 +284,27 @@ mod tests {
             items[0].excerpt.split_whitespace().count(),
             EXCERPT_WORD_LIMIT
         );
+    }
+
+    #[test]
+    fn excerpt_strips_markdown_bold_markers_before_truncating() {
+        let dir = tempfile::tempdir().unwrap();
+        write(
+            dir.path(),
+            "shaped.md",
+            "---\nts: 2026-07-05T00:00:00+00:00\nkind: receipt\n---\n# Shaped\n\n**Delivery = two-phased**, ship then harden.\n",
+        );
+        let window = RetroWindow::custom(ts(2026, 7, 4, 0, 0, 0), ts(2026, 7, 6, 0, 0, 0)).unwrap();
+
+        let items = collect_receipts(dir.path(), &window);
+
+        assert_eq!(items.len(), 1);
+        assert!(
+            !items[0].excerpt.contains('*'),
+            "excerpt must not leak literal markdown markers: {}",
+            items[0].excerpt
+        );
+        assert!(items[0].excerpt.contains("Delivery = two-phased"));
     }
 
     #[test]

@@ -282,9 +282,24 @@ pub fn build_spec(
         ));
     }
 
+    // A repo with zero commits, zero PR references, and zero cards touched
+    // carries no signal -- listing it as a dead table row is exactly the
+    // "mostly whitespace-padded silence" a live designer critique flagged.
+    // Split it into `quiet_repos` instead of a row; `render.rs` folds that
+    // list into a single muted note beneath the table, the same demotion
+    // this function's own zero-repo provenance note already applies below.
+    let mut quiet_repos: Vec<String> = Vec::new();
     let rows: Vec<RepoActivityRow> = repos
         .into_iter()
-        .map(|(repo, mut rollup)| {
+        .filter_map(|(repo, mut rollup)| {
+            let no_signal = rollup.commits == 0
+                && rollup.prs.is_empty()
+                && rollup.cards.is_empty()
+                && rollup.highlights.is_empty();
+            if no_signal {
+                quiet_repos.push(repo);
+                return None;
+            }
             rollup.highlights.sort_by(|a, b| b.0.cmp(&a.0));
             let highlights = rollup
                 .highlights
@@ -292,13 +307,13 @@ pub fn build_spec(
                 .take(HIGHLIGHTS_PER_REPO)
                 .map(|(_, text)| text)
                 .collect();
-            RepoActivityRow {
+            Some(RepoActivityRow {
                 repo,
                 commits: rollup.commits,
                 prs: rollup.prs.len(),
                 cards_touched: rollup.cards.len(),
                 highlights,
-            }
+            })
         })
         .collect();
 
@@ -367,7 +382,7 @@ pub fn build_spec(
             // tables demoted to appendix").
             Component::Narrative(narrative),
             Component::StatCallouts(StatCallouts { items: stat_items }),
-            Component::RepoActivityTable(RepoActivityTable { rows }),
+            Component::RepoActivityTable(RepoActivityTable { rows, quiet_repos }),
             Component::Timeline(Timeline { entries: timeline }),
             Component::Receipts(Receipts {
                 items: receipt_rows,
@@ -576,7 +591,7 @@ mod tests {
     }
 
     #[test]
-    fn quiet_repo_gets_an_all_zero_row_and_no_provenance_note() {
+    fn quiet_repo_is_demoted_out_of_the_table_and_gets_no_provenance_note() {
         let activity = vec![RepoActivity {
             repo: "quiet-repo".into(),
             source: "git:/dev/quiet-repo".into(),
@@ -597,9 +612,11 @@ mod tests {
         let Component::RepoActivityTable(table) = &spec.components[3] else {
             panic!("expected repo table at index 3");
         };
-        assert_eq!(table.rows.len(), 1);
-        assert_eq!(table.rows[0].commits, 0);
-        assert_eq!(table.rows[0].prs, 0);
+        assert!(
+            table.rows.is_empty(),
+            "an all-zero repo must not get a dead table row"
+        );
+        assert_eq!(table.quiet_repos, vec!["quiet-repo".to_string()]);
 
         let Component::Provenance(provenance) = spec.components.last().unwrap() else {
             panic!("expected provenance last");

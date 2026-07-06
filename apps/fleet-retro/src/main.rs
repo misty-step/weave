@@ -7,6 +7,7 @@ mod secrets;
 mod sources;
 mod spec;
 mod synthesis;
+mod text;
 mod window;
 
 use std::path::PathBuf;

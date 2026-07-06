@@ -93,6 +93,11 @@ fn repo_from_card_id(card_id: &str) -> String {
     }
 }
 
+/// Fixed character budget for a rendered comment excerpt -- one number, used
+/// consistently for every comment, so the timeline and repo-activity rows
+/// this feeds never show two different cut lengths side by side.
+const COMMENT_EXCERPT_BUDGET: usize = 160;
+
 fn summarize(event_type: &str, payload: &str) -> String {
     match event_type {
         "create" => "created".to_string(),
@@ -101,17 +106,16 @@ fn summarize(event_type: &str, payload: &str) -> String {
         "status_change" => format!("status -> {payload}"),
         "complete" => "completed".to_string(),
         "comment" => {
-            let trimmed = payload.trim();
-            // Byte-length slicing panics whenever the cut point lands inside
-            // a multi-byte character (em dashes, curly quotes -- both
-            // routine in agent-written comments). Truncate on a char
-            // boundary instead.
-            let truncated: String = trimmed.chars().take(120).collect();
-            if truncated.chars().count() < trimmed.chars().count() {
-                format!("commented: {truncated}…")
-            } else {
-                format!("commented: {truncated}")
-            }
+            // Strip Markdown and collapse paragraph breaks *before*
+            // truncating on a word boundary -- truncating first (the prior
+            // behavior: a raw char slice) could cut inside a `**bold**`
+            // marker or land mid-word, which is exactly the bug a live
+            // designer critique caught in a rendered report.
+            let cleaned = crate::text::plain_text(payload.trim());
+            format!(
+                "commented: {}",
+                crate::text::truncate_words(&cleaned, COMMENT_EXCERPT_BUDGET)
+            )
         }
         other => format!("{other}: {payload}"),
     }
@@ -323,6 +327,26 @@ mod tests {
         assert_eq!(movements.len(), 1);
         assert!(movements[0].summary.starts_with("commented: "));
         assert!(movements[0].summary.ends_with('…'));
+    }
+
+    #[test]
+    fn comment_strips_markdown_bold_and_paragraph_breaks_before_truncating() {
+        // Regression: the literal bug a live designer critique caught --
+        // "SHAPED WITH OPERATOR ... **Delivery = two-phas…" -- a raw `\n\n`
+        // and an unrendered `**` marker landed in the rendered summary, with
+        // the truncation cut falling mid-word inside the marker.
+        let comment = "SHAPED WITH OPERATOR 2026-07-07 morning — ratified design.\n\n**Delivery = two-phased**: ship first, then harden.";
+        let summary = summarize("comment", comment);
+
+        assert!(
+            !summary.contains("**"),
+            "markdown bold markers must not leak into the rendered summary: {summary}"
+        );
+        assert!(
+            !summary.contains('\n'),
+            "paragraph breaks must not render as literal newlines: {summary}"
+        );
+        assert!(summary.starts_with("commented: "));
     }
 
     // `PowderClient::from_env`'s "unconfigured" fallback behavior is

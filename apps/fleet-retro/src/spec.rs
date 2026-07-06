@@ -92,6 +92,12 @@ pub struct StatCallout {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct RepoActivityTable {
     pub rows: Vec<RepoActivityRow>,
+    /// Repos swept with zero commits, zero PR references, and zero cards
+    /// touched in the window -- demoted out of `rows` (a first-time viewer
+    /// should not have to scan a table that is mostly whitespace-padded
+    /// silence) and folded into a single muted note the section renders
+    /// beneath the table instead.
+    pub quiet_repos: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
