@@ -106,6 +106,7 @@ references it.
 | Powder card movements | `sources::powder` | HTTP `list_cards` + `get_card` per card, filtered to events/comments in-window. Falls back to the `<repo>-<number>` card-id convention when a card's own `repo` field is empty. |
 | Bitterblossom plane runs | `sources::bb` | Shells out to `bb --config <plane> runs list --json`. No default plane is assumed -- pass `--bb-plane <path>` (or `FLEET_RETRO_BB_PLANE`) explicitly; there is no single fleet-wide plane in active use as of this writing (`bb-dashboard/plane` exists locally but had zero run history at build time). |
 | Bridge feed events | `sources::feed` | Reads `~/.factory-lanes/feed/*.jsonl`, filtering to feed-post's known `kind` set. **Important:** `~/.factory-lanes/feed/*.jsonl` is shared with at least one other producer (`counterspell`'s `weave.remote_event.v1` session-routing telemetry) whose lines are valid JSON but not feed-post entries -- the parser filters on a closed `kind` allowlist rather than "did it parse as JSON" specifically to exclude that noise (`sources::feed::tests::skips_foreign_schema_lines_sharing_the_same_file` is the regression test for this, built from a real line observed in `~/.factory-lanes/feed/2026-07-05.jsonl`). |
+| Campaign receipts | `sources::receipts` | Reads `~/.factory-lanes/campaign/*.md` (157+ files as of weave-921), the fleet's richest narrative source until now consumed by nothing. Reads a minimal frontmatter block (`ts`, `cards`; see the factory-ops repo's `docs/posting-contract.md`) new receipts write and backfilled receipts were given by `~/.factory-lanes/scripts/backfill-receipt-frontmatter.py`, falling back to file mtime for receipts that predate the convention. Renders as a dedicated "Receipts" section (title + ~40-word excerpt + cards), not folded into the timeline. |
 | Deploys | *(not yet a dedicated source)* | Surfaces indirectly today via feed entries whose title/body mention a deploy, and via PR merges. A dedicated Fly/deploy-log collector is a natural follow-up but was out of scope for this pass; noted here rather than silently claimed as covered. |
 
 ## Tests
@@ -118,4 +119,6 @@ parser silently rejects years >= 2100 -- see the comment in
 against a real foreign-schema line, Powder movement extraction (including a
 regression for a UTF-8 char-boundary panic on multi-byte comment text found
 on the first live run against tonight's actual data), bb's flexible JSON
-shape handling, spec validation, and renderer escaping/empty-state behavior.
+shape handling, the receipts collector's frontmatter parsing and mtime
+fallback (fixture-based, real tempdirs, no mocks), spec validation, and
+renderer escaping/empty-state behavior.

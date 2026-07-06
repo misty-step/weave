@@ -24,6 +24,11 @@ const RETRO_CSS: &str = r#"
 .retro-timeline time{font-family:var(--ae-font-mono);color:var(--ae-ink-faint);}
 .retro-timeline .kind{color:var(--ae-ink-muted);}
 .retro-timeline a{color:var(--ae-accent);}
+.retro-receipts{list-style:none;margin:0;padding:0;}
+.retro-receipts li{padding:.5rem 0;border-bottom:1px solid var(--ae-line);}
+.retro-receipts h3{font-size:.95rem;font-weight:var(--ae-w-medium,600);margin:0 0 .2rem;}
+.retro-receipts p{margin:0 0 .2rem;color:var(--ae-ink-muted);font-size:.88rem;}
+.retro-receipts .cards{font-family:var(--ae-font-mono);color:var(--ae-ink-faint);font-size:.8rem;}
 .retro-provenance{font-size:.82rem;color:var(--ae-ink-muted);}
 .retro-provenance ul{margin:0;padding-left:1.1rem;}
 .retro-empty{color:var(--ae-ink-faint);font-style:italic;}
@@ -107,6 +112,34 @@ fn render_component(component: &Component) -> String {
                 .collect();
             format!(
                 r#"<section class="retro-section"><h2>Timeline</h2><ul class="retro-timeline">{items}</ul></section>"#
+            )
+        }
+        Component::Receipts(receipts) => {
+            if receipts.items.is_empty() {
+                return r#"<section class="retro-section"><h2>Receipts</h2><p class="retro-empty">No campaign receipts in this window.</p></section>"#.to_string();
+            }
+            let items: String = receipts
+                .items
+                .iter()
+                .map(|item| {
+                    let cards = if item.cards.is_empty() {
+                        String::new()
+                    } else {
+                        format!(
+                            r#"<span class="cards">{}</span>"#,
+                            esc(&item.cards.join(", "))
+                        )
+                    };
+                    format!(
+                        r#"<li><h3>{}</h3><p>{}</p>{}</li>"#,
+                        esc(&item.title),
+                        esc(&item.excerpt),
+                        cards
+                    )
+                })
+                .collect();
+            format!(
+                r#"<section class="retro-section"><h2>Receipts</h2><ul class="retro-receipts">{items}</ul></section>"#
             )
         }
         Component::Provenance(provenance) => {
@@ -221,6 +254,36 @@ mod tests {
         let html = render_html(&spec);
         assert!(!html.contains("<script>alert(1)</script>"));
         assert!(html.contains("&lt;script&gt;"));
+    }
+
+    #[test]
+    fn renders_receipts_with_title_excerpt_and_cards() {
+        let mut spec = sample_spec();
+        spec.components.insert(
+            3,
+            Component::Receipts(Receipts {
+                items: vec![ReceiptRow {
+                    title: "weave-908 — daily retro shipped".into(),
+                    excerpt: "Shipped the daily/weekly retro end to end.".into(),
+                    path: "/receipts/weave-908-report.md".into(),
+                    cards: vec!["weave-908".into()],
+                    at: "2026-07-05T04:00:00+00:00".into(),
+                }],
+            }),
+        );
+        let html = render_html(&spec);
+        assert!(html.contains("weave-908 — daily retro shipped"));
+        assert!(html.contains("Shipped the daily/weekly retro end to end."));
+        assert!(html.contains("retro-receipts"));
+    }
+
+    #[test]
+    fn empty_receipts_render_explicit_empty_state() {
+        let mut spec = sample_spec();
+        spec.components
+            .insert(3, Component::Receipts(Receipts { items: vec![] }));
+        let html = render_html(&spec);
+        assert!(html.contains("No campaign receipts in this window."));
     }
 
     #[test]

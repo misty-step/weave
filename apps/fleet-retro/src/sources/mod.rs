@@ -2,6 +2,7 @@ pub mod bb;
 pub mod feed;
 pub mod git;
 pub mod powder;
+pub mod receipts;
 
 /// One line of "how this retro knows what it knows" -- rendered verbatim
 /// into the report's provenance disclosure. Every collector produces zero

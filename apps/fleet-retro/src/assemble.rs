@@ -5,6 +5,7 @@ use crate::sources::bb::BbRun;
 use crate::sources::feed::FeedEvent;
 use crate::sources::git::{RepoActivity, parse_commit_time};
 use crate::sources::powder::CardMovement;
+use crate::sources::receipts::ReceiptItem;
 use crate::spec::*;
 use crate::window::RetroWindow;
 
@@ -24,6 +25,7 @@ pub fn build_spec(
     card_movements: &[CardMovement],
     bb_runs: &[BbRun],
     feed_events: &[FeedEvent],
+    receipts: &[ReceiptItem],
     mut notes: Vec<SourceNote>,
 ) -> anyhow::Result<RetroSpec> {
     #[derive(Default)]
@@ -151,6 +153,23 @@ pub fn build_spec(
             ),
         ));
     }
+    if !receipts.is_empty() {
+        notes.push(SourceNote::new(
+            "receipts",
+            format!("{} campaign receipt(s) in window", receipts.len()),
+        ));
+    }
+
+    let receipt_rows: Vec<ReceiptRow> = receipts
+        .iter()
+        .map(|item| ReceiptRow {
+            title: item.title.clone(),
+            excerpt: item.excerpt.clone(),
+            path: item.path.clone(),
+            cards: item.cards.clone(),
+            at: item.ts.clone(),
+        })
+        .collect();
 
     timeline.sort_by(|a, b| a.at.cmp(&b.at));
     timeline.reverse();
@@ -213,6 +232,10 @@ pub fn build_spec(
             value: feed_events.len().to_string(),
         },
         StatCallout {
+            label: "Receipts".into(),
+            value: receipts.len().to_string(),
+        },
+        StatCallout {
             label: "Window".into(),
             value: format!("{}h", window.duration_hours()),
         },
@@ -238,6 +261,9 @@ pub fn build_spec(
             Component::StatCallouts(StatCallouts { items: stat_items }),
             Component::RepoActivityTable(RepoActivityTable { rows }),
             Component::Timeline(Timeline { entries: timeline }),
+            Component::Receipts(Receipts {
+                items: receipt_rows,
+            }),
             Component::Provenance(Provenance { notes: notes_view }),
         ],
     };
@@ -281,6 +307,7 @@ mod tests {
             &[],
             &[],
             &[],
+            &[],
             vec![],
         )
         .unwrap();
@@ -315,6 +342,7 @@ mod tests {
             &[],
             &[],
             &[],
+            &[],
             vec![],
         )
         .unwrap();
@@ -323,5 +351,50 @@ mod tests {
             panic!("expected stats at index 1");
         };
         assert_eq!(stats.items[0].value, "0");
+    }
+
+    #[test]
+    fn receipts_become_a_dedicated_component_and_a_provenance_note() {
+        use crate::sources::receipts::ReceiptItem;
+
+        let receipts = vec![ReceiptItem {
+            path: "/receipts/weave-908-report.md".into(),
+            title: "weave-908 — daily retro shipped".into(),
+            excerpt: "Shipped the daily/weekly retro end to end.".into(),
+            cards: vec!["weave-908".into()],
+            ts: "2026-07-05T04:00:00+00:00".into(),
+            source: "receipt:/receipts/weave-908-report.md".into(),
+        }];
+
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &[],
+            &[],
+            &[],
+            &[],
+            &receipts,
+            vec![],
+        )
+        .unwrap();
+
+        assert!(spec.validate().is_ok());
+        let Component::Receipts(receipts_component) = &spec.components[4] else {
+            panic!("expected receipts component at index 4");
+        };
+        assert_eq!(receipts_component.items.len(), 1);
+        assert_eq!(
+            receipts_component.items[0].title,
+            "weave-908 — daily retro shipped"
+        );
+        assert_eq!(receipts_component.items[0].cards, vec!["weave-908"]);
+
+        let Component::Provenance(provenance) = spec.components.last().unwrap() else {
+            panic!("expected provenance last");
+        };
+        assert!(
+            provenance.notes.iter().any(|n| n.source == "receipts"),
+            "provenance must name the receipts source when it contributed"
+        );
     }
 }

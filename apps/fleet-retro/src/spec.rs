@@ -66,6 +66,7 @@ pub enum Component {
     StatCallouts(StatCallouts),
     RepoActivityTable(RepoActivityTable),
     Timeline(Timeline),
+    Receipts(Receipts),
     Provenance(Provenance),
 }
 
@@ -113,6 +114,20 @@ pub struct TimelineEntry {
     pub summary: String,
     pub source: String,
     pub link: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct Receipts {
+    pub items: Vec<ReceiptRow>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ReceiptRow {
+    pub title: String,
+    pub excerpt: String,
+    pub path: String,
+    pub cards: Vec<String>,
+    pub at: String,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

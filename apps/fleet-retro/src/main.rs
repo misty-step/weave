@@ -12,7 +12,7 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
 
-use sources::{SourceNote, bb, feed, git, powder};
+use sources::{SourceNote, bb, feed, git, powder, receipts};
 use window::RetroWindow;
 
 /// Generate a fleet-wide agent-activity retro over a time window (daily,
@@ -50,6 +50,10 @@ struct Cli {
     /// Directory containing the Bridge feed's *.jsonl files
     #[arg(long, env = "FLEET_RETRO_FEED_DIR")]
     feed_dir: Option<PathBuf>,
+
+    /// Directory containing campaign receipt markdown files
+    #[arg(long, env = "FLEET_RETRO_CAMPAIGN_DIR")]
+    campaign_dir: Option<PathBuf>,
 
     /// Path to a bb plane.toml directory to read run history from (omit to skip bb)
     #[arg(long, env = "FLEET_RETRO_BB_PLANE")]
@@ -133,6 +137,10 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         .feed_dir
         .clone()
         .unwrap_or_else(|| home.join(".factory-lanes").join("feed"));
+    let campaign_dir = cli
+        .campaign_dir
+        .clone()
+        .unwrap_or_else(|| home.join(".factory-lanes").join("campaign"));
 
     eprintln!(
         "fleet-retro: window={} since={} until={}",
@@ -207,6 +215,9 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     // --- Bridge feed events ---------------------------------------------------
     let feed_events = feed::collect_feed_events(&feed_dir, &window);
 
+    // --- campaign receipts ----------------------------------------------------
+    let campaign_receipts = receipts::collect_receipts(&campaign_dir, &window);
+
     let generated_at = now.to_rfc3339();
     let retro_spec = assemble::build_spec(
         &window,
@@ -215,6 +226,7 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         &card_movements,
         &bb_runs,
         &feed_events,
+        &campaign_receipts,
         notes,
     )?;
 
@@ -281,12 +293,13 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
             .len()
     );
     let feed_body = format!(
-        "Covers {} → {}. {} repos swept, {} feed events, {} bb runs.",
+        "Covers {} → {}. {} repos swept, {} feed events, {} bb runs, {} receipts.",
         window.since,
         window.until,
         repo_activity.len(),
         feed_events.len(),
-        bb_runs.len()
+        bb_runs.len(),
+        campaign_receipts.len()
     );
     publish::post_feed_report(home, &feed_title, &feed_body, report_url.as_deref());
 
