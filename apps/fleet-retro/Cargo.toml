@@ -13,6 +13,11 @@ path = "src/main.rs"
 anyhow = "1.0.98"
 chrono = { version = "0.4.41", features = ["serde"] }
 clap = { version = "4.5.40", features = ["derive", "env"] }
+# aesthetic-926: the shared two-tier report component catalog. Pinned to the
+# exact merge commit on misty-step/glance's main (not a floating branch),
+# matching the fleet's established "consumers pin, upgrade deliberately"
+# convention (aesthetic's own git-tag-pinned CSS consumers).
+glance-catalog = { git = "https://github.com/misty-step/glance", rev = "b670c63560ef5ae55f72f08549f5875e6ca3fe51" }
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"

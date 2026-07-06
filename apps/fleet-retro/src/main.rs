@@ -16,8 +16,9 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
 
+use glance_catalog::structural::{Narrative, NarrativeStatus};
 use sources::{SourceNote, bb, feed, git, moments, powder, receipts};
-use spec::{Footer, Narrative, NarrativeStatus};
+use spec::Footer;
 use window::RetroWindow;
 
 /// Generate a fleet-wide agent-activity retro over a time window (daily,
@@ -337,13 +338,15 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     // attempt synthesis at all (`--no-synthesis`, or no OpenRouter key
     // configured, both degrade to the same fail-open shape `synthesize`
     // itself produces on exhausted attempts).
-    let (narrative, judge, gate_status) = if cli.no_synthesis {
+    let (narrative, citations, judge, gate_status) = if cli.no_synthesis {
         (
             Narrative {
-                status: NarrativeStatus::FailedOpen {
+                heading: synthesis::NARRATIVE_HEADING.to_string(),
+                status: NarrativeStatus::Unavailable {
                     reason: "--no-synthesis set; skipped".to_string(),
                 },
             },
+            Vec::new(),
             "none".to_string(),
             "skipped: --no-synthesis".to_string(),
         )
@@ -351,14 +354,21 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         match synthesis::OpenRouterClient::from_env() {
             Some(client) => {
                 let outcome = synthesis::synthesize(&client, &evidence_pack);
-                (outcome.narrative, outcome.judge, outcome.gate_status)
+                (
+                    outcome.narrative,
+                    outcome.citations,
+                    outcome.judge,
+                    outcome.gate_status,
+                )
             }
             None => (
                 Narrative {
-                    status: NarrativeStatus::FailedOpen {
+                    heading: synthesis::NARRATIVE_HEADING.to_string(),
+                    status: NarrativeStatus::Unavailable {
                         reason: "OPENROUTER_API_KEY not configured; skipped".to_string(),
                     },
                 },
+                Vec::new(),
                 "none".to_string(),
                 "fail-open: OPENROUTER_API_KEY not configured".to_string(),
             ),
@@ -378,6 +388,7 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         &generated_at,
         &evidence_pack,
         narrative,
+        citations,
         footer,
         notes,
     )?;

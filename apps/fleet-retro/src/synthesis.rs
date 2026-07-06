@@ -1,8 +1,60 @@
 use anyhow::{Context, Result};
+use glance_catalog::inline::InlineNode;
+use glance_catalog::structural::{Narrative, NarrativeStatus};
 
 use crate::citation_gate;
 use crate::pack::EvidencePack;
-use crate::spec::{Narrative, NarrativeStatus};
+use crate::spec::Citation;
+
+/// Every pack item id is a 16-hex-digit `stable_id` -- see
+/// `citation_gate::citation_regex`, which this must stay in lockstep with
+/// (both anchor the exact same token shape; a mismatch would let the gate
+/// accept a token this parser can't structure, or vice versa).
+fn citation_token_regex() -> regex::Regex {
+    regex::Regex::new(r"\[([0-9a-f]{16})\]").expect("static citation-token pattern is valid")
+}
+
+/// Turn one gate-passed narrative line into structured inline nodes: plain
+/// text stays `InlineNode::Text`, every `[id]` token becomes an
+/// `InlineNode::Cite` carrying that id as its opaque `ref_id` -- the same
+/// visible text (`[id]`) the pre-catalog renderer's `linkify_citations`
+/// produced, so the shared crate's `render_inline_nodes` reproduces
+/// byte-identical link text once given the same `cite_href` resolver
+/// (`|ref_id| format!("#cite-{ref_id}")`, `render.rs`).
+fn parse_citation_tokens(line: &str) -> Vec<InlineNode> {
+    let re = citation_token_regex();
+    let mut nodes = Vec::new();
+    let mut last_end = 0;
+    for capture in re.captures_iter(line) {
+        let whole = capture.get(0).expect("capture 0 always matches");
+        if whole.start() > last_end {
+            nodes.push(InlineNode::Text {
+                text: line[last_end..whole.start()].to_string(),
+            });
+        }
+        let id = capture[1].to_string();
+        nodes.push(InlineNode::Cite {
+            text: format!("[{id}]"),
+            ref_id: id,
+        });
+        last_end = whole.end();
+    }
+    if last_end < line.len() {
+        nodes.push(InlineNode::Text {
+            text: line[last_end..].to_string(),
+        });
+    }
+    if nodes.is_empty() {
+        // Every caller only reaches here with citation-gate-passed text, so
+        // this is unreachable in practice (every line has >=1 citation),
+        // but a blank paragraph is still better than an empty node list the
+        // catalog's `validate_inline_nodes` would reject.
+        nodes.push(InlineNode::Text {
+            text: line.to_string(),
+        });
+    }
+    nodes
+}
 
 /// Prompt-shape version, recorded in the report footer alongside the pack
 /// schema version and judge model (oracle findings ruled binding
@@ -112,12 +164,19 @@ EVIDENCE:\n{evidence}"
     )
 }
 
+/// Heading for the narrative section -- was a literal in the pre-catalog
+/// `render.rs`'s `<h2>`; now part of the catalog `Narrative` struct itself.
+pub const NARRATIVE_HEADING: &str = "What mattered";
+
 /// Outcome of the whole cheap-default/escalate/retry/fail-open cascade:
 /// either a gate-passed narrative or an explicit fail-open, plus the footer
 /// metadata (judge model, gate status) every run records regardless of
-/// which path it took.
+/// which path it took. `citations` is fleet-retro's local "cited evidence"
+/// appendix data (see `spec::Citation`) -- kept alongside, not inside, the
+/// shared catalog's `Narrative`.
 pub struct SynthesisOutcome {
     pub narrative: Narrative,
+    pub citations: Vec<Citation>,
     pub judge: String,
     pub gate_status: String,
 }
@@ -146,16 +205,18 @@ pub fn synthesize(client: &dyn SynthesisClient, pack: &EvidencePack) -> Synthesi
         };
         match citation_gate::validate_citations(&text, pack) {
             Ok(citations) => {
-                let blocks: Vec<String> = text
+                let paragraphs: Vec<Vec<InlineNode>> = text
                     .lines()
                     .map(str::trim)
                     .filter(|line| !line.is_empty())
-                    .map(str::to_string)
+                    .map(parse_citation_tokens)
                     .collect();
                 return SynthesisOutcome {
                     narrative: Narrative {
-                        status: NarrativeStatus::Ok { blocks, citations },
+                        heading: NARRATIVE_HEADING.to_string(),
+                        status: NarrativeStatus::Ok { paragraphs },
                     },
+                    citations,
                     judge: model.to_string(),
                     gate_status: format!(
                         "passed on attempt {} of {} ({model})",
@@ -177,7 +238,8 @@ pub fn synthesize(client: &dyn SynthesisClient, pack: &EvidencePack) -> Synthesi
 
     SynthesisOutcome {
         narrative: Narrative {
-            status: NarrativeStatus::FailedOpen {
+            heading: NARRATIVE_HEADING.to_string(),
+            status: NarrativeStatus::Unavailable {
                 reason: format!(
                     "exhausted {} attempts ({} cheap, {} escalated) without a gate-passing narrative; showing the deterministic tables-only report",
                     ATTEMPT_MODELS.len(),
@@ -186,8 +248,55 @@ pub fn synthesize(client: &dyn SynthesisClient, pack: &EvidencePack) -> Synthesi
                 ),
             },
         },
+        citations: Vec::new(),
         judge: "none".to_string(),
         gate_status: "fail-open: no attempt passed the citation gate".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod parse_citation_tokens_tests {
+    use super::*;
+
+    #[test]
+    fn splits_surrounding_text_from_citation_tokens() {
+        let nodes = parse_citation_tokens("Landmark shipped a fix today [aaaaaaaaaaaaaaaa].");
+        assert_eq!(
+            nodes,
+            vec![
+                InlineNode::Text {
+                    text: "Landmark shipped a fix today ".to_string()
+                },
+                InlineNode::Cite {
+                    text: "[aaaaaaaaaaaaaaaa]".to_string(),
+                    ref_id: "aaaaaaaaaaaaaaaa".to_string(),
+                },
+                InlineNode::Text {
+                    text: ".".to_string()
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn handles_multiple_citations_in_one_line() {
+        let nodes = parse_citation_tokens("a [aaaaaaaaaaaaaaaa] then b [bbbbbbbbbbbbbbbb].");
+        let cite_count = nodes
+            .iter()
+            .filter(|n| matches!(n, InlineNode::Cite { .. }))
+            .count();
+        assert_eq!(cite_count, 2);
+    }
+
+    #[test]
+    fn a_line_with_no_citation_token_becomes_one_text_node() {
+        let nodes = parse_citation_tokens("no citations here");
+        assert_eq!(
+            nodes,
+            vec![InlineNode::Text {
+                text: "no citations here".to_string()
+            }]
+        );
     }
 }
 
@@ -254,11 +363,11 @@ mod tests {
 
         assert_eq!(outcome.judge, "deepseek/deepseek-v4-flash");
         assert!(outcome.gate_status.contains("attempt 1"));
-        let NarrativeStatus::Ok { blocks, citations } = outcome.narrative.status else {
+        let NarrativeStatus::Ok { paragraphs } = outcome.narrative.status else {
             panic!("expected an accepted narrative");
         };
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(citations.len(), 1);
+        assert_eq!(paragraphs.len(), 1);
+        assert_eq!(outcome.citations.len(), 1);
         assert_eq!(client.calls.borrow().len(), 1);
     }
 
@@ -277,7 +386,7 @@ mod tests {
 
         assert_eq!(outcome.judge, "none");
         assert!(outcome.gate_status.starts_with("fail-open"));
-        let NarrativeStatus::FailedOpen { reason } = outcome.narrative.status else {
+        let NarrativeStatus::Unavailable { reason } = outcome.narrative.status else {
             panic!("expected a fail-open narrative when the model is unreachable");
         };
         assert!(reason.contains("exhausted"));
@@ -296,7 +405,7 @@ mod tests {
         let outcome = synthesize(&client, &pack);
 
         assert_eq!(outcome.judge, "none");
-        let NarrativeStatus::FailedOpen { .. } = outcome.narrative.status else {
+        let NarrativeStatus::Unavailable { .. } = outcome.narrative.status else {
             panic!("expected fail-open when every attempt cites a fabricated id");
         };
         // Escalation order: cheap, cheap, escalated -- proving the routing

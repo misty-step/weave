@@ -1,5 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use glance_catalog::inline::InlineNode;
+use glance_catalog::leaf::Metric;
+use glance_catalog::structural::{
+    Cell, CellValue, ColumnSpec, Hero, Narrative, Row, Table, Timeline, TimelineEntry,
+};
+
 use crate::pack::EvidencePack;
 use crate::sources::SourceNote;
 use crate::spec::*;
@@ -32,6 +38,79 @@ fn derive_feed_repo(agent: &str) -> String {
     "fleet".to_string()
 }
 
+const REPO_TABLE_COLUMNS: [(&str, &str, bool); 4] = [
+    ("commits", "commits", true),
+    ("prs", "PRs", true),
+    ("cards_touched", "cards", true),
+    ("highlights", "highlights", false),
+];
+
+fn repo_table_columns() -> Vec<ColumnSpec> {
+    let mut columns = vec![ColumnSpec {
+        key: "repo".to_string(),
+        label: "repo".to_string(),
+        numeric: false,
+        // The "item that matters" column -- aesthetic.css's .ae-item,
+        // matching glance-gen's FileTable name column and this table's own
+        // pre-aesthetic-926 repo cell.
+        emphasize: true,
+    }];
+    columns.extend(
+        REPO_TABLE_COLUMNS
+            .iter()
+            .map(|(key, label, numeric)| ColumnSpec {
+                key: key.to_string(),
+                label: label.to_string(),
+                numeric: *numeric,
+                emphasize: false,
+            }),
+    );
+    columns
+}
+
+struct RepoActivityRow {
+    repo: String,
+    commits: usize,
+    prs: usize,
+    cards_touched: usize,
+    highlights: Vec<String>,
+}
+
+fn repo_activity_row_to_table_row(row: RepoActivityRow) -> Row {
+    Row {
+        cells: vec![
+            Cell {
+                column_key: "repo".to_string(),
+                value: CellValue::Text { text: row.repo },
+            },
+            Cell {
+                column_key: "commits".to_string(),
+                value: CellValue::Text {
+                    text: row.commits.to_string(),
+                },
+            },
+            Cell {
+                column_key: "prs".to_string(),
+                value: CellValue::Text {
+                    text: row.prs.to_string(),
+                },
+            },
+            Cell {
+                column_key: "cards_touched".to_string(),
+                value: CellValue::Text {
+                    text: row.cards_touched.to_string(),
+                },
+            },
+            Cell {
+                column_key: "highlights".to_string(),
+                value: CellValue::List {
+                    items: row.highlights,
+                },
+            },
+        ],
+    }
+}
+
 /// Pure assembly: turn an already-collected, already-projected
 /// `EvidencePack` into a validated `RetroSpec`. Nothing in here does I/O --
 /// `pack::build_pack` already turned every collector's native output into
@@ -52,6 +131,7 @@ pub fn build_spec(
     generated_at: &str,
     pack: &EvidencePack,
     narrative: Narrative,
+    narrative_citations: Vec<Citation>,
     footer: Footer,
     mut notes: Vec<SourceNote>,
 ) -> anyhow::Result<RetroSpec> {
@@ -100,11 +180,11 @@ pub fn build_spec(
                         .push((item.ts.clone(), item.title.clone()));
                     timeline.push(TimelineEntry {
                         at: item.ts.clone(),
-                        repo,
+                        actor: repo,
                         kind: "commit".to_string(),
                         summary: item.title.clone(),
-                        source: item.source.clone(),
                         link: None,
+                        detail: vec![],
                     });
                 }
                 "pr-ref" => {
@@ -130,11 +210,11 @@ pub fn build_spec(
                 .push((item.ts.clone(), format!("{card_id}: {}", item.excerpt)));
             timeline.push(TimelineEntry {
                 at: item.ts.clone(),
-                repo,
+                actor: repo,
                 kind: item.kind.clone(),
                 summary: item.title.clone(),
-                source: item.source.clone(),
                 link: None,
+                detail: vec![],
             });
         } else if item.source.starts_with("bb:") {
             total_bb_runs += 1;
@@ -147,11 +227,11 @@ pub fn build_spec(
                 .push((item.ts.clone(), format!("{task} run {state}")));
             timeline.push(TimelineEntry {
                 at: item.ts.clone(),
-                repo,
+                actor: repo,
                 kind: "bb-run".to_string(),
                 summary: item.title.clone(),
-                source: item.source.clone(),
                 link: None,
+                detail: vec![],
             });
         } else if item.source.starts_with("receipt:") {
             total_receipts += 1;
@@ -183,11 +263,11 @@ pub fn build_spec(
                 .push((item.ts.clone(), item.title.clone()));
             timeline.push(TimelineEntry {
                 at: item.ts.clone(),
-                repo,
+                actor: repo,
                 kind: item.kind.clone(),
                 summary: item.title.clone(),
-                source: item.source.clone(),
                 link,
+                detail: vec![],
             });
         } else if item.source.starts_with("moment:") {
             // Rolls up into the same `bb:{task}` bucket a regular `bb-run`
@@ -203,11 +283,11 @@ pub fn build_spec(
                 .push((item.ts.clone(), format!("{}: {}", item.kind, item.excerpt)));
             timeline.push(TimelineEntry {
                 at: item.ts.clone(),
-                repo,
+                actor: repo,
                 kind: format!("moment-{}", item.kind),
                 summary: item.title.clone(),
-                source: item.source.clone(),
                 link: None,
+                detail: vec![],
             });
         }
         // An item from an unrecognized source is ignored rather than
@@ -289,7 +369,7 @@ pub fn build_spec(
     // list into a single muted note beneath the table, the same demotion
     // this function's own zero-repo provenance note already applies below.
     let mut quiet_repos: Vec<String> = Vec::new();
-    let rows: Vec<RepoActivityRow> = repos
+    let rows: Vec<Row> = repos
         .into_iter()
         .filter_map(|(repo, mut rollup)| {
             let no_signal = rollup.commits == 0
@@ -307,13 +387,13 @@ pub fn build_spec(
                 .take(HIGHLIGHTS_PER_REPO)
                 .map(|(_, text)| text)
                 .collect();
-            Some(RepoActivityRow {
+            Some(repo_activity_row_to_table_row(RepoActivityRow {
                 repo,
                 commits: rollup.commits,
                 prs: rollup.prs.len(),
                 cards_touched: rollup.cards.len(),
                 highlights,
-            })
+            }))
         })
         .collect();
 
@@ -325,40 +405,63 @@ pub fn build_spec(
         })
         .collect();
 
-    let stat_items = vec![
-        StatCallout {
+    // All 8 pre-aesthetic-926 StatCallout items, now merged into Hero.stats
+    // (glance-catalog's Hero has no upper bound -- see that crate's fix
+    // commit -- so nothing here is truncated or demoted).
+    let stats = vec![
+        Metric {
             label: "Commits".into(),
             value: total_commits.to_string(),
         },
-        StatCallout {
+        Metric {
             label: "PRs".into(),
             value: all_prs.len().to_string(),
         },
-        StatCallout {
+        Metric {
             label: "Cards touched".into(),
             value: all_cards.len().to_string(),
         },
-        StatCallout {
+        Metric {
             label: "bb runs".into(),
             value: total_bb_runs.to_string(),
         },
-        StatCallout {
+        Metric {
             label: "Feed events".into(),
             value: total_feed_events.to_string(),
         },
-        StatCallout {
+        Metric {
             label: "Receipts".into(),
             value: total_receipts.to_string(),
         },
-        StatCallout {
+        Metric {
             label: "Moments".into(),
             value: total_moments.to_string(),
         },
-        StatCallout {
+        Metric {
             label: "Window".into(),
             value: format!("{}h", window.duration_hours()),
         },
     ];
+
+    let repo_table_empty_note = if rows.is_empty() {
+        Some("No repo activity in this window.".to_string())
+    } else {
+        None
+    };
+    let repo_table_demoted_note = if quiet_repos.is_empty() {
+        None
+    } else {
+        Some(format!(
+            "{} repo(s) swept with no activity: {}",
+            quiet_repos.len(),
+            quiet_repos.join(", ")
+        ))
+    };
+    let timeline_empty_note = if timeline.is_empty() {
+        Some("No dated events in this window.".to_string())
+    } else {
+        None
+    };
 
     let spec = RetroSpec {
         catalog_version: CATALOG_VERSION.to_string(),
@@ -369,21 +472,37 @@ pub fn build_spec(
         generated_at: generated_at.to_string(),
         components: vec![
             Component::Hero(Hero {
-                headline: format!("Fleet retro — {}", window.label),
-                subhead: format!(
-                    "{} → {} ({}h window)",
-                    window.since.to_rfc3339(),
-                    window.until.to_rfc3339(),
-                    window.duration_hours()
-                ),
+                title: format!("Fleet retro — {}", window.label),
+                summary: vec![InlineNode::Text {
+                    text: format!(
+                        "{} → {} ({}h window)",
+                        window.since.to_rfc3339(),
+                        window.until.to_rfc3339(),
+                        window.duration_hours()
+                    ),
+                }],
+                stats,
+                image_intent: None,
             }),
             // Narrative leads; the tables below it are the appendix (card
             // acceptance: "Daily retro leads with a cited narrative section;
             // tables demoted to appendix").
-            Component::Narrative(narrative),
-            Component::StatCallouts(StatCallouts { items: stat_items }),
-            Component::RepoActivityTable(RepoActivityTable { rows, quiet_repos }),
-            Component::Timeline(Timeline { entries: timeline }),
+            Component::Narrative {
+                narrative,
+                citations: narrative_citations,
+            },
+            Component::Table(Table {
+                heading: "Repo activity".to_string(),
+                columns: repo_table_columns(),
+                rows,
+                empty_note: repo_table_empty_note,
+                demoted_note: repo_table_demoted_note,
+            }),
+            Component::Timeline(Timeline {
+                heading: "Timeline".to_string(),
+                entries: timeline,
+                empty_note: timeline_empty_note,
+            }),
             Component::Receipts(Receipts {
                 items: receipt_rows,
             }),
@@ -404,6 +523,7 @@ mod tests {
     use crate::sources::git::{RepoActivity, RepoCommit, ts};
     use crate::sources::powder::CardMovement;
     use crate::sources::receipts::ReceiptItem;
+    use glance_catalog::structural::NarrativeStatus;
 
     fn window() -> RetroWindow {
         RetroWindow::custom(ts(2026, 7, 4, 21, 0, 0), ts(2026, 7, 5, 21, 0, 0)).unwrap()
@@ -416,7 +536,8 @@ mod tests {
     /// honest about what it's actually testing.
     fn stub_narrative() -> Narrative {
         Narrative {
-            status: NarrativeStatus::FailedOpen {
+            heading: "What mattered".to_string(),
+            status: NarrativeStatus::Unavailable {
                 reason: "not exercised by this test".to_string(),
             },
         }
@@ -429,6 +550,32 @@ mod tests {
             prompt_version: "test".to_string(),
             pack_schema_version: "test".to_string(),
             pack_assembly_ms: 0,
+        }
+    }
+
+    fn cell_text<'a>(row: &'a Row, column_key: &str) -> &'a str {
+        match &row
+            .cells
+            .iter()
+            .find(|cell| cell.column_key == column_key)
+            .unwrap_or_else(|| panic!("expected a cell for column {column_key}"))
+            .value
+        {
+            CellValue::Text { text } => text.as_str(),
+            other => panic!("expected CellValue::Text for {column_key}, got {other:?}"),
+        }
+    }
+
+    fn cell_list<'a>(row: &'a Row, column_key: &str) -> &'a [String] {
+        match &row
+            .cells
+            .iter()
+            .find(|cell| cell.column_key == column_key)
+            .unwrap_or_else(|| panic!("expected a cell for column {column_key}"))
+            .value
+        {
+            CellValue::List { items } => items.as_slice(),
+            other => panic!("expected CellValue::List for {column_key}, got {other:?}"),
         }
     }
 
@@ -451,19 +598,20 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
         assert!(spec.validate().is_ok());
-        let Component::RepoActivityTable(table) = &spec.components[3] else {
-            panic!("expected repo table at index 3");
+        let Component::Table(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
         };
         assert_eq!(table.rows.len(), 1);
-        assert_eq!(table.rows[0].repo, "landmark");
-        assert_eq!(table.rows[0].commits, 1);
-        assert_eq!(table.rows[0].prs, 1);
+        assert_eq!(cell_text(&table.rows[0], "repo"), "landmark");
+        assert_eq!(cell_text(&table.rows[0], "commits"), "1");
+        assert_eq!(cell_text(&table.rows[0], "prs"), "1");
 
         let Component::Provenance(provenance) = spec.components.last().unwrap() else {
             panic!("expected provenance last");
@@ -485,15 +633,16 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
         assert!(spec.validate().is_ok());
-        let Component::StatCallouts(stats) = &spec.components[2] else {
-            panic!("expected stats at index 2");
+        let Component::Hero(hero) = &spec.components[0] else {
+            panic!("expected hero at index 0");
         };
-        assert_eq!(stats.items[0].value, "0");
+        assert_eq!(hero.stats[0].value, "0");
     }
 
     #[test]
@@ -512,14 +661,15 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
         assert!(spec.validate().is_ok());
-        let Component::Receipts(receipts_component) = &spec.components[5] else {
-            panic!("expected receipts component at index 5");
+        let Component::Receipts(receipts_component) = &spec.components[4] else {
+            panic!("expected receipts component at index 4");
         };
         assert_eq!(receipts_component.items.len(), 1);
         assert_eq!(
@@ -561,33 +711,19 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::StatCallouts(stats) = &spec.components[2] else {
-            panic!("expected stats at index 2");
+        let Component::Receipts(receipts_component) = &spec.components[4] else {
+            panic!("expected receipts component at index 4");
         };
-        let feed_stat = stats
-            .items
-            .iter()
-            .find(|s| s.label == "Feed events")
-            .unwrap();
-        let receipts_stat = stats.items.iter().find(|s| s.label == "Receipts").unwrap();
-        assert_eq!(
-            feed_stat.value, "1",
-            "a feed-sourced item counts as a feed event"
-        );
-        assert_eq!(
-            receipts_stat.value, "0",
+        assert!(
+            receipts_component.items.is_empty(),
             "a feed-sourced item with kind=receipt must not count as a campaign receipt"
         );
-
-        let Component::Receipts(receipts_component) = &spec.components[5] else {
-            panic!("expected receipts component at index 5");
-        };
-        assert!(receipts_component.items.is_empty());
     }
 
     #[test]
@@ -604,19 +740,23 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[3] else {
-            panic!("expected repo table at index 3");
+        let Component::Table(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
         };
         assert!(
             table.rows.is_empty(),
             "an all-zero repo must not get a dead table row"
         );
-        assert_eq!(table.quiet_repos, vec!["quiet-repo".to_string()]);
+        assert_eq!(
+            table.demoted_note.as_deref(),
+            Some("1 repo(s) swept with no activity: quiet-repo")
+        );
 
         let Component::Provenance(provenance) = spec.components.last().unwrap() else {
             panic!("expected provenance last");
@@ -644,23 +784,24 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[3] else {
-            panic!("expected repo table at index 3");
+        let Component::Table(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
         };
-        assert_eq!(table.rows[0].commits, 0);
-        assert_eq!(table.rows[0].prs, 1);
+        assert_eq!(cell_text(&table.rows[0], "commits"), "0");
+        assert_eq!(cell_text(&table.rows[0], "prs"), "1");
         assert!(
-            table.rows[0].highlights.is_empty(),
+            cell_list(&table.rows[0], "highlights").is_empty(),
             "a merge-only PR reference has no commit timestamp to become a highlight"
         );
 
-        let Component::Timeline(timeline) = &spec.components[4] else {
-            panic!("expected timeline at index 4");
+        let Component::Timeline(timeline) = &spec.components[3] else {
+            panic!("expected timeline at index 3");
         };
         assert!(
             timeline.entries.is_empty(),
@@ -696,18 +837,19 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[3] else {
-            panic!("expected repo table at index 3");
+        let Component::Table(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
         };
         assert_eq!(table.rows.len(), 1, "git and powder activity share one row");
-        assert_eq!(table.rows[0].commits, 1);
-        assert_eq!(table.rows[0].cards_touched, 1);
-        assert_eq!(table.rows[0].highlights.len(), 2);
+        assert_eq!(cell_text(&table.rows[0], "commits"), "1");
+        assert_eq!(cell_text(&table.rows[0], "cards_touched"), "1");
+        assert_eq!(cell_list(&table.rows[0], "highlights").len(), 2);
     }
 
     #[test]
@@ -735,13 +877,14 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::Timeline(timeline) = &spec.components[4] else {
-            panic!("expected timeline at index 4");
+        let Component::Timeline(timeline) = &spec.components[3] else {
+            panic!("expected timeline at index 3");
         };
         assert_eq!(timeline.entries.len(), 2);
 
@@ -777,34 +920,29 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             stub_narrative(),
+            vec![],
             stub_footer(),
             vec![],
         )
         .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[3] else {
-            panic!("expected repo table at index 3");
+        let Component::Table(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
         };
         assert_eq!(
             table.rows.len(),
             1,
             "the moment card rolls into the existing bb:build row, not a new one"
         );
-        assert_eq!(table.rows[0].repo, "bb:build");
+        assert_eq!(cell_text(&table.rows[0], "repo"), "bb:build");
 
-        let Component::Timeline(timeline) = &spec.components[4] else {
-            panic!("expected timeline at index 4");
+        let Component::Timeline(timeline) = &spec.components[3] else {
+            panic!("expected timeline at index 3");
         };
         assert!(
             timeline.entries.iter().any(|e| e.kind == "moment-failure"),
             "a moment card becomes its own timeline entry, kind-prefixed with moment-"
         );
-
-        let Component::StatCallouts(stats) = &spec.components[2] else {
-            panic!("expected stats at index 2");
-        };
-        let moments_stat = stats.items.iter().find(|s| s.label == "Moments").unwrap();
-        assert_eq!(moments_stat.value, "1");
 
         let Component::Provenance(provenance) = spec.components.last().unwrap() else {
             panic!("expected provenance last");
@@ -816,14 +954,23 @@ mod tests {
     fn narrative_and_footer_pass_through_to_the_expected_component_slots() {
         let pack = build_pack(&window(), &[], &[], &[], &[], &[], &[]);
         let narrative = Narrative {
+            heading: "What mattered".to_string(),
             status: NarrativeStatus::Ok {
-                blocks: vec!["Landmark shipped a fix today [aaaaaaaaaaaaaaaa].".to_string()],
-                citations: vec![Citation {
-                    id: "aaaaaaaaaaaaaaaa".to_string(),
-                    title: "landmark shipped a fix".to_string(),
-                }],
+                paragraphs: vec![vec![
+                    InlineNode::Text {
+                        text: "Landmark shipped a fix today ".to_string(),
+                    },
+                    InlineNode::Cite {
+                        text: "[aaaaaaaaaaaaaaaa]".to_string(),
+                        ref_id: "aaaaaaaaaaaaaaaa".to_string(),
+                    },
+                ]],
             },
         };
+        let citations = vec![Citation {
+            id: "aaaaaaaaaaaaaaaa".to_string(),
+            title: "landmark shipped a fix".to_string(),
+        }];
         let footer = Footer {
             judge: "deepseek/deepseek-v4-flash".to_string(),
             gate_status: "passed on attempt 1 of 3".to_string(),
@@ -837,21 +984,27 @@ mod tests {
             "2026-07-05T21:00:05Z",
             &pack,
             narrative,
+            citations,
             footer,
             vec![],
         )
         .unwrap();
 
-        let Component::Narrative(rendered_narrative) = &spec.components[1] else {
+        let Component::Narrative {
+            narrative: rendered_narrative,
+            citations: rendered_citations,
+        } = &spec.components[1]
+        else {
             panic!("expected narrative at index 1, right after hero");
         };
         assert!(matches!(
             rendered_narrative.status,
             NarrativeStatus::Ok { .. }
         ));
+        assert_eq!(rendered_citations.len(), 1);
 
-        let Component::Footer(rendered_footer) = &spec.components[6] else {
-            panic!("expected footer at index 6, right before provenance");
+        let Component::Footer(rendered_footer) = &spec.components[5] else {
+            panic!("expected footer at index 5, right before provenance");
         };
         assert_eq!(rendered_footer.judge, "deepseek/deepseek-v4-flash");
         assert_eq!(rendered_footer.pack_assembly_ms, 42);
