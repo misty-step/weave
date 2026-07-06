@@ -42,3 +42,44 @@ does not bypass Powder's card lifecycle rules. The `status` enum is
 `correlation_id`, `source` (kind, external_id, url), `subject` (repo, kind,
 id), `idempotency_key`, `proposed_card` (title, description_ref, priority,
 labels), `status`, `payload`.
+
+---
+
+## weave.evidence-pack.v1
+
+**Introduced:** 2026-07-06 · **Commit:** (this PR, weave-922, child of the
+weave-920 Evidence Pipeline v2 epic)
+
+Versioned intermediate between fleet-retro's collectors (git, Powder, bb,
+feed, campaign receipts) and everything downstream of them: RetroSpec
+assembly today, the weave-923 synthesis stage and citation gate next. Every
+collector projects its native output into zero or more generic evidence
+items rather than RetroSpec assembly reading five differently-shaped
+collector structs directly — a new collector or a new report kind extends
+the pack, not everything downstream of it. Serializes to
+`evidence-pack.json` beside every rendered report
+(`apps/fleet-retro/src/pack.rs`).
+
+**Fields:** `schema_version`, `window` (`since`, `until`), `items[]` each
+`{id, ts, source, kind, title, refs[], excerpt}`. `id` is a stable hash of
+source-specific identifying parts (e.g. repo+commit-hash), not random, so
+the same evidence always gets the same id. `refs` is a small ad-hoc tag list
+(`"repo:landmark"`, `"card:landmark-907"`, `"pr:200"`) rather than
+per-source struct fields — a consumer that only understands the five fixed
+fields still gets `title`/`excerpt`/`ts`, while a consumer needing
+source-specific structure (RetroSpec assembly's per-repo rollups) parses the
+tags it recognizes.
+
+**Dispatch note:** consumers must key on an item's `source` prefix
+(`git:`/`powder:`/`bb:`/`feed:`/`receipt:`) before `kind` — feed-post's own
+`KNOWN_KINDS` enum reserves `"receipt"` as a valid feed-post kind (receipt
+mirrors), which collides with the campaign-receipts collector's own
+`"receipt"` kind. Every collector stamps a distinct source prefix
+specifically so this is resolvable without ambiguity.
+
+**Regression discipline:** any change to `pack.rs` or `assemble.rs`'s
+consumption of it must be checked against a byte-identical rendered-HTML
+diff for a fixed past window before merging (weave-922's own acceptance
+criterion) — the pack is an internal refactor of an already-shipped
+renderer, not a new surface, so its introduction must not change what the
+operator sees.

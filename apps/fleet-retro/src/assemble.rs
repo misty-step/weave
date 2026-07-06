@@ -1,175 +1,245 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
+use crate::pack::EvidencePack;
 use crate::sources::SourceNote;
-use crate::sources::bb::BbRun;
-use crate::sources::feed::FeedEvent;
-use crate::sources::git::{RepoActivity, parse_commit_time};
-use crate::sources::powder::CardMovement;
-use crate::sources::receipts::ReceiptItem;
 use crate::spec::*;
 use crate::window::RetroWindow;
 
 const TIMELINE_LIMIT: usize = 300;
 const HIGHLIGHTS_PER_REPO: usize = 4;
 
-/// Pure assembly: turn already-collected evidence into a validated
-/// `RetroSpec`. Nothing in here does I/O -- every input is data a collector
-/// already fetched, so this function (and therefore the report's shape) is
-/// fully unit-testable against hand-built fixtures, independent of live
+#[derive(Default)]
+struct RepoRollup {
+    commits: usize,
+    prs: BTreeSet<String>,
+    cards: BTreeSet<String>,
+    highlights: Vec<(String, String)>, // (at, text) for sort-then-truncate
+    /// Set only when this repo row has ever seen a git-sourced item
+    /// (`repo-swept`/`commit`/`pr-ref`) -- the per-repo "N commits, N PR
+    /// reference(s)" provenance note is a git-specific claim, and a repo
+    /// name that only ever showed up via a Powder card or a bb task must not
+    /// get one.
+    git_source: Option<String>,
+}
+
+/// The repo key a feed-post event rolls up under: the posting agent's name,
+/// unless it's one of fleet-retro's own generator identities (in which case
+/// there is no more specific repo to attribute it to than "fleet" itself).
+fn derive_feed_repo(agent: &str) -> String {
+    if agent != "fleet-digest" && agent != "fleet-retro" && !agent.is_empty() {
+        return agent.to_string();
+    }
+    "fleet".to_string()
+}
+
+/// Pure assembly: turn an already-collected, already-projected
+/// `EvidencePack` into a validated `RetroSpec`. Nothing in here does I/O --
+/// `pack::build_pack` already turned every collector's native output into
+/// the pack's generic `{id, ts, source, kind, title, refs, excerpt}` items,
+/// so this function (and therefore the report's shape) is fully
+/// unit-testable against a hand-built pack, independent of live
 /// git/Powder/bb state.
-#[allow(clippy::too_many_arguments)]
+///
+/// Dispatch is keyed on each item's `source` prefix (`git:`, `powder:`,
+/// `bb:`, `feed:`, `receipt:`) rather than `kind` alone: feed-post's own
+/// `KNOWN_KINDS` enum reserves `"receipt"` as a valid feed-post kind (for
+/// receipt mirrors), which collides with the campaign-receipts collector's
+/// `"receipt"` kind -- the source prefix disambiguates them unambiguously
+/// since every collector already stamps a distinct one.
 pub fn build_spec(
     window: &RetroWindow,
     generated_at: &str,
-    repo_activity: &[RepoActivity],
-    card_movements: &[CardMovement],
-    bb_runs: &[BbRun],
-    feed_events: &[FeedEvent],
-    receipts: &[ReceiptItem],
+    pack: &EvidencePack,
     mut notes: Vec<SourceNote>,
 ) -> anyhow::Result<RetroSpec> {
-    #[derive(Default)]
-    struct RepoRollup {
-        commits: usize,
-        prs: usize,
-        cards: std::collections::BTreeSet<String>,
-        highlights: Vec<(String, String)>, // (at, text) for sort-then-truncate
-    }
-
     let mut repos: BTreeMap<String, RepoRollup> = BTreeMap::new();
     let mut timeline: Vec<TimelineEntry> = Vec::new();
+    let mut receipt_rows: Vec<ReceiptRow> = Vec::new();
     let mut total_commits = 0usize;
-    let mut all_prs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    let mut all_cards: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut all_prs: BTreeSet<String> = BTreeSet::new();
+    let mut all_cards: BTreeSet<String> = BTreeSet::new();
+    let mut total_bb_runs = 0usize;
+    let mut total_feed_events = 0usize;
+    let mut total_card_movements = 0usize;
+    let mut total_receipts = 0usize;
 
-    for activity in repo_activity {
-        let rollup = repos.entry(activity.repo.clone()).or_default();
-        rollup.commits += activity.commits.len();
-        rollup.prs = activity.pr_numbers.len();
-        total_commits += activity.commits.len();
-        for pr in &activity.pr_numbers {
-            all_prs.insert(format!("{}#{}", activity.repo, pr));
-        }
-        for commit in &activity.commits {
-            let at = parse_commit_time(commit)
-                .map(|dt| dt.to_rfc3339())
-                .unwrap_or_default();
-            rollup.highlights.push((at.clone(), commit.subject.clone()));
+    for item in &pack.items {
+        // Dispatch on the *source* prefix first, not `kind` alone:
+        // feed-post's own `KNOWN_KINDS` enum reserves `"receipt"` as a valid
+        // feed-post kind (for receipt mirrors), which collides with the
+        // campaign-receipts collector's `"receipt"` kind. Every collector
+        // already stamps a distinct source prefix (`git:`, `powder:`, `bb:`,
+        // `feed:`, `receipt:`), so checking that first resolves the
+        // collision unambiguously; only within the `git:` family does `kind`
+        // then distinguish `repo-swept`/`commit`/`pr-ref`.
+        if item.source.starts_with("git:") {
+            match item.kind.as_str() {
+                "repo-swept" => {
+                    let repo = item.ref_value("repo:").unwrap_or("unknown").to_string();
+                    let rollup = repos.entry(repo).or_default();
+                    rollup.git_source.get_or_insert_with(|| item.source.clone());
+                }
+                "commit" => {
+                    let repo = item.ref_value("repo:").unwrap_or("unknown").to_string();
+                    total_commits += 1;
+                    if let Some(pr) = item.ref_value("pr:") {
+                        all_prs.insert(format!("{repo}#{pr}"));
+                    }
+                    let rollup = repos.entry(repo.clone()).or_default();
+                    rollup.git_source.get_or_insert_with(|| item.source.clone());
+                    rollup.commits += 1;
+                    if let Some(pr) = item.ref_value("pr:") {
+                        rollup.prs.insert(pr.to_string());
+                    }
+                    rollup
+                        .highlights
+                        .push((item.ts.clone(), item.title.clone()));
+                    timeline.push(TimelineEntry {
+                        at: item.ts.clone(),
+                        repo,
+                        kind: "commit".to_string(),
+                        summary: item.title.clone(),
+                        source: item.source.clone(),
+                        link: None,
+                    });
+                }
+                "pr-ref" => {
+                    let repo = item.ref_value("repo:").unwrap_or("unknown").to_string();
+                    if let Some(pr) = item.ref_value("pr:") {
+                        all_prs.insert(format!("{repo}#{pr}"));
+                        let rollup = repos.entry(repo).or_default();
+                        rollup.git_source.get_or_insert_with(|| item.source.clone());
+                        rollup.prs.insert(pr.to_string());
+                    }
+                }
+                _ => {}
+            }
+        } else if item.source.starts_with("powder:") {
+            let repo = item.ref_value("repo:").unwrap_or("unknown").to_string();
+            let card_id = item.ref_value("card:").unwrap_or("unknown").to_string();
+            total_card_movements += 1;
+            all_cards.insert(card_id.clone());
+            let rollup = repos.entry(repo.clone()).or_default();
+            rollup.cards.insert(card_id.clone());
+            rollup
+                .highlights
+                .push((item.ts.clone(), format!("{card_id}: {}", item.excerpt)));
             timeline.push(TimelineEntry {
-                at,
-                repo: activity.repo.clone(),
-                kind: "commit".to_string(),
-                summary: commit.subject.clone(),
-                source: activity.source.clone(),
+                at: item.ts.clone(),
+                repo,
+                kind: item.kind.clone(),
+                summary: item.title.clone(),
+                source: item.source.clone(),
                 link: None,
             });
+        } else if item.source.starts_with("bb:") {
+            total_bb_runs += 1;
+            let task = item.ref_value("task:").unwrap_or("unknown");
+            let state = item.ref_value("state:").unwrap_or("unknown");
+            let repo = format!("bb:{task}");
+            let rollup = repos.entry(repo.clone()).or_default();
+            rollup
+                .highlights
+                .push((item.ts.clone(), format!("{task} run {state}")));
+            timeline.push(TimelineEntry {
+                at: item.ts.clone(),
+                repo,
+                kind: "bb-run".to_string(),
+                summary: item.title.clone(),
+                source: item.source.clone(),
+                link: None,
+            });
+        } else if item.source.starts_with("receipt:") {
+            total_receipts += 1;
+            let path = item.ref_value("path:").unwrap_or("").to_string();
+            let cards = item
+                .ref_values("card:")
+                .into_iter()
+                .map(str::to_string)
+                .collect();
+            receipt_rows.push(ReceiptRow {
+                title: item.title.clone(),
+                excerpt: item.excerpt.clone(),
+                path,
+                cards,
+                at: item.ts.clone(),
+            });
+        } else if item.source.starts_with("feed:") {
+            total_feed_events += 1;
+            let agent = item.ref_value("agent:").unwrap_or("");
+            let repo = derive_feed_repo(agent);
+            let link = item
+                .ref_values("link:")
+                .into_iter()
+                .next()
+                .map(str::to_string);
+            let rollup = repos.entry(repo.clone()).or_default();
+            rollup
+                .highlights
+                .push((item.ts.clone(), item.title.clone()));
+            timeline.push(TimelineEntry {
+                at: item.ts.clone(),
+                repo,
+                kind: item.kind.clone(),
+                summary: item.title.clone(),
+                source: item.source.clone(),
+                link,
+            });
         }
-        if activity.commits.is_empty() && activity.pr_numbers.is_empty() {
+        // An item from an unrecognized source is ignored rather than
+        // failing the whole report, matching every collector's own "one
+        // bad input doesn't blank the source" rule.
+    }
+
+    // Per-repo git provenance notes, in repo-name order. This coincides with
+    // the discovery order collectors originally pushed these notes in
+    // (`git::discover_repos` sorts by path, and repo names share a common
+    // dev-root prefix so name order and path order agree in practice) --
+    // covered by this module's byte-identical regression test against a
+    // pre-refactor baseline capture.
+    for rollup in repos.values() {
+        let Some(source) = &rollup.git_source else {
+            continue;
+        };
+        if rollup.commits == 0 && rollup.prs.is_empty() {
             continue;
         }
         notes.push(SourceNote::new(
-            activity.source.clone(),
+            source.clone(),
             format!(
                 "{} commits, {} PR reference(s) in window",
-                activity.commits.len(),
-                activity.pr_numbers.len()
+                rollup.commits,
+                rollup.prs.len()
             ),
         ));
     }
-
-    for movement in card_movements {
-        all_cards.insert(movement.card_id.clone());
-        let rollup = repos.entry(movement.repo.clone()).or_default();
-        rollup.cards.insert(movement.card_id.clone());
-        rollup.highlights.push((
-            movement.at.clone(),
-            format!("{}: {}", movement.card_id, movement.summary),
-        ));
-        timeline.push(TimelineEntry {
-            at: movement.at.clone(),
-            repo: movement.repo.clone(),
-            kind: format!("card-{}", movement.event_type),
-            summary: format!(
-                "{} ({}) — {}",
-                movement.card_id, movement.actor, movement.summary
-            ),
-            source: movement.source.clone(),
-            link: None,
-        });
-    }
-
-    for run in bb_runs {
-        let rollup = repos.entry(format!("bb:{}", run.task)).or_default();
-        rollup.highlights.push((
-            run.created_at.clone(),
-            format!("{} run {}", run.task, run.state),
-        ));
-        timeline.push(TimelineEntry {
-            at: run.created_at.clone(),
-            repo: run.task.clone(),
-            kind: "bb-run".to_string(),
-            summary: format!("{} ({}) — {}", run.id, run.agent, run.state),
-            source: run.source.clone(),
-            link: None,
-        });
-    }
-
-    for event in feed_events {
-        let repo_key = derive_feed_repo(event);
-        let rollup = repos.entry(repo_key.clone()).or_default();
-        rollup
-            .highlights
-            .push((event.ts.clone(), event.title.clone()));
-        let link = event.links.first().map(|l| l.url.clone());
-        timeline.push(TimelineEntry {
-            at: event.ts.clone(),
-            repo: repo_key,
-            kind: event.kind.clone(),
-            summary: event.title.clone(),
-            source: event.source.clone(),
-            link,
-        });
-    }
-
-    if !bb_runs.is_empty() {
+    if total_bb_runs > 0 {
         notes.push(SourceNote::new(
             "bb",
-            format!("{} plane run(s) in window", bb_runs.len()),
+            format!("{total_bb_runs} plane run(s) in window"),
         ));
     }
-    if !feed_events.is_empty() {
+    if total_feed_events > 0 {
         notes.push(SourceNote::new(
             "feed",
-            format!("{} feed event(s) in window", feed_events.len()),
+            format!("{total_feed_events} feed event(s) in window"),
         ));
     }
-    if !card_movements.is_empty() {
+    if total_card_movements > 0 {
         notes.push(SourceNote::new(
             "powder",
             format!(
-                "{} card movement(s) across {} card(s) in window",
-                card_movements.len(),
+                "{total_card_movements} card movement(s) across {} card(s) in window",
                 all_cards.len()
             ),
         ));
     }
-    if !receipts.is_empty() {
+    if total_receipts > 0 {
         notes.push(SourceNote::new(
             "receipts",
-            format!("{} campaign receipt(s) in window", receipts.len()),
+            format!("{total_receipts} campaign receipt(s) in window"),
         ));
     }
-
-    let receipt_rows: Vec<ReceiptRow> = receipts
-        .iter()
-        .map(|item| ReceiptRow {
-            title: item.title.clone(),
-            excerpt: item.excerpt.clone(),
-            path: item.path.clone(),
-            cards: item.cards.clone(),
-            at: item.ts.clone(),
-        })
-        .collect();
 
     timeline.sort_by(|a, b| a.at.cmp(&b.at));
     timeline.reverse();
@@ -195,7 +265,7 @@ pub fn build_spec(
             RepoActivityRow {
                 repo,
                 commits: rollup.commits,
-                prs: rollup.prs,
+                prs: rollup.prs.len(),
                 cards_touched: rollup.cards.len(),
                 highlights,
             }
@@ -225,15 +295,15 @@ pub fn build_spec(
         },
         StatCallout {
             label: "bb runs".into(),
-            value: bb_runs.len().to_string(),
+            value: total_bb_runs.to_string(),
         },
         StatCallout {
             label: "Feed events".into(),
-            value: feed_events.len().to_string(),
+            value: total_feed_events.to_string(),
         },
         StatCallout {
             label: "Receipts".into(),
-            value: receipts.len().to_string(),
+            value: total_receipts.to_string(),
         },
         StatCallout {
             label: "Window".into(),
@@ -271,17 +341,15 @@ pub fn build_spec(
     Ok(spec)
 }
 
-fn derive_feed_repo(event: &FeedEvent) -> String {
-    if event.agent != "fleet-digest" && event.agent != "fleet-retro" && !event.agent.is_empty() {
-        return event.agent.clone();
-    }
-    "fleet".to_string()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sources::git::{RepoCommit, ts};
+    use crate::pack::build_pack;
+    use crate::sources::bb::BbRun;
+    use crate::sources::feed::FeedEvent;
+    use crate::sources::git::{RepoActivity, RepoCommit, ts};
+    use crate::sources::powder::CardMovement;
+    use crate::sources::receipts::ReceiptItem;
 
     fn window() -> RetroWindow {
         RetroWindow::custom(ts(2026, 7, 4, 21, 0, 0), ts(2026, 7, 5, 21, 0, 0)).unwrap()
@@ -300,17 +368,8 @@ mod tests {
             }],
             pr_numbers: vec!["200".into()],
         }];
-        let spec = build_spec(
-            &window(),
-            "2026-07-05T21:00:05Z",
-            &activity,
-            &[],
-            &[],
-            &[],
-            &[],
-            vec![],
-        )
-        .unwrap();
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
 
         assert!(spec.validate().is_ok());
         let Component::RepoActivityTable(table) = &spec.components[2] else {
@@ -335,17 +394,8 @@ mod tests {
 
     #[test]
     fn empty_evidence_still_produces_a_valid_spec_with_explicit_zeros() {
-        let spec = build_spec(
-            &window(),
-            "2026-07-05T21:00:05Z",
-            &[],
-            &[],
-            &[],
-            &[],
-            &[],
-            vec![],
-        )
-        .unwrap();
+        let pack = build_pack(&window(), &[], &[], &[], &[], &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
         assert!(spec.validate().is_ok());
         let Component::StatCallouts(stats) = &spec.components[1] else {
             panic!("expected stats at index 1");
@@ -355,8 +405,6 @@ mod tests {
 
     #[test]
     fn receipts_become_a_dedicated_component_and_a_provenance_note() {
-        use crate::sources::receipts::ReceiptItem;
-
         let receipts = vec![ReceiptItem {
             path: "/receipts/weave-908-report.md".into(),
             title: "weave-908 — daily retro shipped".into(),
@@ -365,18 +413,8 @@ mod tests {
             ts: "2026-07-05T04:00:00+00:00".into(),
             source: "receipt:/receipts/weave-908-report.md".into(),
         }];
-
-        let spec = build_spec(
-            &window(),
-            "2026-07-05T21:00:05Z",
-            &[],
-            &[],
-            &[],
-            &[],
-            &receipts,
-            vec![],
-        )
-        .unwrap();
+        let pack = build_pack(&window(), &[], &[], &[], &[], &receipts);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
 
         assert!(spec.validate().is_ok());
         let Component::Receipts(receipts_component) = &spec.components[4] else {
@@ -396,5 +434,178 @@ mod tests {
             provenance.notes.iter().any(|n| n.source == "receipts"),
             "provenance must name the receipts source when it contributed"
         );
+    }
+
+    #[test]
+    fn feed_events_kind_receipt_is_not_confused_with_a_campaign_receipt() {
+        // Regression: feed-post's own KNOWN_KINDS enum reserves "receipt" as
+        // a valid feed-post kind (receipt mirrors), which collides with the
+        // campaign-receipts collector's "receipt" kind. Dispatch must key on
+        // `source` prefix, not `kind` alone, or a feed-sourced receipt
+        // mirror silently becomes a fake campaign receipt (and vanishes
+        // from the feed-events count) -- found live via the byte-identical
+        // regression diff against the pre-refactor baseline.
+        let feed_events = vec![FeedEvent {
+            ts: "2026-07-05T07:00:00+00:00".into(),
+            agent: "release-events".into(),
+            kind: "receipt".into(),
+            title: "release receipt mirrored".into(),
+            body: None,
+            links: vec![],
+            source: "feed:/day.jsonl".into(),
+        }];
+        let pack = build_pack(&window(), &[], &[], &[], &feed_events, &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+
+        let Component::StatCallouts(stats) = &spec.components[1] else {
+            panic!("expected stats at index 1");
+        };
+        let feed_stat = stats
+            .items
+            .iter()
+            .find(|s| s.label == "Feed events")
+            .unwrap();
+        let receipts_stat = stats.items.iter().find(|s| s.label == "Receipts").unwrap();
+        assert_eq!(
+            feed_stat.value, "1",
+            "a feed-sourced item counts as a feed event"
+        );
+        assert_eq!(
+            receipts_stat.value, "0",
+            "a feed-sourced item with kind=receipt must not count as a campaign receipt"
+        );
+
+        let Component::Receipts(receipts_component) = &spec.components[4] else {
+            panic!("expected receipts component at index 4");
+        };
+        assert!(receipts_component.items.is_empty());
+    }
+
+    #[test]
+    fn quiet_repo_gets_an_all_zero_row_and_no_provenance_note() {
+        let activity = vec![RepoActivity {
+            repo: "quiet-repo".into(),
+            source: "git:/dev/quiet-repo".into(),
+            commits: vec![],
+            pr_numbers: vec![],
+        }];
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+
+        let Component::RepoActivityTable(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
+        };
+        assert_eq!(table.rows.len(), 1);
+        assert_eq!(table.rows[0].commits, 0);
+        assert_eq!(table.rows[0].prs, 0);
+
+        let Component::Provenance(provenance) = spec.components.last().unwrap() else {
+            panic!("expected provenance last");
+        };
+        assert!(
+            !provenance
+                .notes
+                .iter()
+                .any(|n| n.source.contains("quiet-repo")),
+            "a repo with zero commits and zero PR references gets no provenance note"
+        );
+    }
+
+    #[test]
+    fn merge_only_pr_counts_toward_the_repo_row_with_zero_commits() {
+        let activity = vec![RepoActivity {
+            repo: "landmark".into(),
+            source: "git:/dev/landmark".into(),
+            commits: vec![],
+            pr_numbers: vec!["34".into()],
+        }];
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+
+        let Component::RepoActivityTable(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
+        };
+        assert_eq!(table.rows[0].commits, 0);
+        assert_eq!(table.rows[0].prs, 1);
+        assert!(
+            table.rows[0].highlights.is_empty(),
+            "a merge-only PR reference has no commit timestamp to become a highlight"
+        );
+
+        let Component::Timeline(timeline) = &spec.components[3] else {
+            panic!("expected timeline at index 3");
+        };
+        assert!(
+            timeline.entries.is_empty(),
+            "a merge-only PR reference is never a timeline entry"
+        );
+    }
+
+    #[test]
+    fn all_sources_share_one_repo_row_and_a_capped_highlight_list() {
+        let activity = vec![RepoActivity {
+            repo: "landmark".into(),
+            source: "git:/dev/landmark".into(),
+            commits: vec![RepoCommit {
+                hash: "abc123".into(),
+                subject: "fix: ground release notes".into(),
+                pr_number: None,
+                at: "2026-07-05T04:20:00+00:00".into(),
+            }],
+            pr_numbers: vec![],
+        }];
+        let card_movements = vec![CardMovement {
+            card_id: "landmark-907".into(),
+            repo: "landmark".into(),
+            event_type: "complete".into(),
+            actor: "lane-x".into(),
+            at: "2026-07-05T05:00:00+00:00".into(),
+            summary: "completed".into(),
+            source: "powder:card:landmark-907".into(),
+        }];
+        let pack = build_pack(&window(), &activity, &card_movements, &[], &[], &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+
+        let Component::RepoActivityTable(table) = &spec.components[2] else {
+            panic!("expected repo table at index 2");
+        };
+        assert_eq!(table.rows.len(), 1, "git and powder activity share one row");
+        assert_eq!(table.rows[0].commits, 1);
+        assert_eq!(table.rows[0].cards_touched, 1);
+        assert_eq!(table.rows[0].highlights.len(), 2);
+    }
+
+    #[test]
+    fn bb_and_feed_sources_get_timeline_entries_and_notes() {
+        let bb_runs = vec![BbRun {
+            id: "run-1".into(),
+            task: "build".into(),
+            agent: "vulcan".into(),
+            state: "done".into(),
+            created_at: "2026-07-05T06:00:00+00:00".into(),
+            source: "bb:test-plane".into(),
+        }];
+        let feed_events = vec![FeedEvent {
+            ts: "2026-07-05T07:00:00+00:00".into(),
+            agent: "linejam-overhaul".into(),
+            kind: "shipped".into(),
+            title: "linejam overhaul complete".into(),
+            body: None,
+            links: vec![],
+            source: "feed:/day.jsonl".into(),
+        }];
+        let pack = build_pack(&window(), &[], &[], &bb_runs, &feed_events, &[]);
+        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+
+        let Component::Timeline(timeline) = &spec.components[3] else {
+            panic!("expected timeline at index 3");
+        };
+        assert_eq!(timeline.entries.len(), 2);
+
+        let Component::Provenance(provenance) = spec.components.last().unwrap() else {
+            panic!("expected provenance last");
+        };
+        assert!(provenance.notes.iter().any(|n| n.source == "bb"));
+        assert!(provenance.notes.iter().any(|n| n.source == "feed"));
     }
 }

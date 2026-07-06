@@ -2,20 +2,27 @@
 
 `apps/fleet-retro` generates a retro over an arbitrary time window covering
 everything the fleet's agents did: git commits/PRs per repo, Powder card
-movements, Bitterblossom plane runs, and Bridge feed events. It renders the
-result through a spec-first page spec (`src/spec.rs`) and a deterministic
-HTML renderer (`src/render.rs`) styled with the Misty Step Aesthetic, then
-pushes it to the bastion artifact shelf and posts a `kind=report` entry to
-the Bridge feed so it shows up at Sanctum → Bridge.
+movements, Bitterblossom plane runs, Bridge feed events, and campaign
+receipts. Every collector projects into a versioned `EvidencePack`
+(`src/pack.rs`, `weave.evidence-pack.v1` -- see the schema changelog), which
+`assemble.rs` turns into a spec-first page spec (`src/spec.rs`) rendered by
+a deterministic HTML renderer (`src/render.rs`) styled with the Misty Step
+Aesthetic, then pushed to the bastion artifact shelf with a `kind=report`
+entry posted to the Bridge feed so it shows up at Sanctum → Bridge.
 
 Built for weave-908 (operator directive 2026-07-04): a daily ~21:00 + weekly
 Sunday + arbitrary-window retro that "very clearly and accurately describes
 everything that all of our agents across the weave did across all of our
-applications over the past 24 hours."
+applications over the past 24 hours." Extended by weave-920 (Evidence
+Pipeline v2, operator directive 2026-07-06): collectors read sources of
+truth at synthesis time (pull-federation, not event-sourcing -- no mirrors,
+no capture daemons), pack into one versioned intermediate, and feed toward a
+future model-synthesis stage and citation gate (weave-923) that this repo's
+other report kinds (briefings, incidents, audits) can ride too.
 
 ## Why this shape
 
-- **Spec-first, not template-first.** `assemble.rs` turns collected evidence
+- **Spec-first, not template-first.** `assemble.rs` turns an `EvidencePack`
   into a validated `RetroSpec` before any HTML exists; `render.rs` is a pure
   function of that spec. This is the same pattern glance-gen's
   `PageSpec`/`Component` catalog uses (prior art named directly in the
@@ -24,17 +31,42 @@ applications over the past 24 hours."
   seam is narrow (`render::render_html(&RetroSpec) -> String`), so retargeting
   a future shared primitive means swapping one function, not rewriting the
   collectors.
+- **One versioned intermediate between collectors and everything
+  downstream.** Every collector projects its native output into
+  `pack::EvidenceItem`s (`{id, ts, source, kind, title, refs, excerpt}`)
+  rather than `assemble.rs` reading five differently-shaped collector
+  structs directly. A new collector, or a future report kind (briefing,
+  incident, audit) built on the same pipeline, extends the pack instead of
+  touching every downstream consumer. `refs` is a small ad-hoc tag list
+  (`"repo:landmark"`, `"card:landmark-907"`) rather than per-source struct
+  fields, so a consumer needing source-specific structure (this repo's
+  per-repo rollups) parses the tags it recognizes without the schema itself
+  growing per-source fields.
 - **Sources named per claim.** Every collector attaches a `source` string
   (`git:/path/to/repo`, `powder:card:landmark-907`, `bb:<plane>`,
-  `feed:/path/day.jsonl`) to what it produces, and the assembled spec's
+  `feed:/path/day.jsonl`, `receipt:/path/to/file.md`) to what it produces,
+  and `assemble.rs` dispatches on that prefix before `kind` (feed-post's own
+  `KNOWN_KINDS` reserves `"receipt"` as a valid feed-post kind, which
+  collides with the campaign-receipts collector's own `"receipt"` kind --
+  the source prefix, not `kind` alone, resolves it). The assembled spec's
   `Provenance` component is a required, structurally-enforced last component
   (`spec.rs::validate`) -- a retro that can't name where a claim came from
   fails validation, it doesn't render silently.
 - **Explicit gaps, not silent omissions.** An unconfigured source (no
   `--bb-plane`, no `POWDER_API_BASE_URL`) reports "not configured" as a
-  provenance note. A quiet repo (swept, zero commits) is named in the
-  provenance, not left out. This is what "accuracy beats coverage" means in
-  the card: a narrower honest retro over a false-confident one.
+  provenance note. A quiet repo (swept, zero commits) still gets a
+  `repo-swept` pack item and an all-zero `RepoActivityRow`, not silent
+  absence. This is what "accuracy beats coverage" means in the card: a
+  narrower honest retro over a false-confident one.
+- **Refactors of this pipeline are regression-tested by rendered-HTML byte
+  identity, not just unit tests.** weave-922 (extracting the pack) captured
+  a baseline `index.html` for a fixed past window before the refactor and
+  diffed the post-refactor render against it byte-for-byte, over a frozen
+  snapshot of the collector inputs (a live shared directory like
+  `~/.factory-lanes/campaign/` keeps changing, so a true regression check
+  freezes a copy rather than re-reading the moving live state twice). Any
+  future change to `pack.rs` or `assemble.rs` should do the same before
+  merging.
 
 ## Running it
 
@@ -70,6 +102,13 @@ needs to read the last daily *and* the last weekly retro simultaneously
 
 - `https://bastion.tail5f5eb4.ts.net/artifacts/a/fleet-retro/daily/index.html`
 - `https://bastion.tail5f5eb4.ts.net/artifacts/a/fleet-retro/weekly/index.html`
+
+Each run also writes `spec.json` (the assembled `RetroSpec`) and
+`evidence-pack.json` (the versioned `EvidencePack` the spec was assembled
+from) as siblings of `index.html`, and both ride the same shelf publish
+path -- the pack is meant to be the citation gate's (weave-923) ground
+truth wherever the report lands, not something only readable from the local
+output directory.
 
 Each publish also posts a `kind=report` entry to
 `~/.factory-lanes/feed/*.jsonl` via the existing `feed-post` script, which
@@ -120,5 +159,12 @@ against a real foreign-schema line, Powder movement extraction (including a
 regression for a UTF-8 char-boundary panic on multi-byte comment text found
 on the first live run against tonight's actual data), bb's flexible JSON
 shape handling, the receipts collector's frontmatter parsing and mtime
-fallback (fixture-based, real tempdirs, no mocks), spec validation, and
-renderer escaping/empty-state behavior.
+fallback (fixture-based, real tempdirs, no mocks), the evidence pack's
+per-collector projection and cross-source ordering (`pack::tests`,
+including a regression for the feed/receipt `kind` collision), assemble's
+reconstruction of repo rollups/timeline/notes from pack items (including a
+merge-only-PR and an all-zero quiet-repo case), spec validation, and
+renderer escaping/empty-state behavior. Beyond the unit suite, weave-922's
+introduction of the pack was checked against a byte-identical rendered-HTML
+diff over a frozen snapshot of live collector inputs, not unit tests alone
+-- see "Why this shape" above.

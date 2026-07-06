@@ -1,4 +1,5 @@
 mod assemble;
+mod pack;
 mod publish;
 mod render;
 mod secrets;
@@ -218,17 +219,20 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     // --- campaign receipts ----------------------------------------------------
     let campaign_receipts = receipts::collect_receipts(&campaign_dir, &window);
 
-    let generated_at = now.to_rfc3339();
-    let retro_spec = assemble::build_spec(
+    // --- evidence pack: the versioned intermediate every collector's
+    // output projects into before RetroSpec assembly ever sees it. This is
+    // the seam weave-923's synthesis stage and citation gate build on next.
+    let evidence_pack = pack::build_pack(
         &window,
-        &generated_at,
         &repo_activity,
         &card_movements,
         &bb_runs,
         &feed_events,
         &campaign_receipts,
-        notes,
-    )?;
+    );
+
+    let generated_at = now.to_rfc3339();
+    let retro_spec = assemble::build_spec(&window, &generated_at, &evidence_pack, notes)?;
 
     if cli.dry_run {
         println!("{}", serde_json::to_string_pretty(&retro_spec)?);
@@ -260,6 +264,14 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         serde_json::to_string_pretty(&retro_spec)?,
     )
     .with_context(|| format!("writing {}/spec.json", out_dir.display()))?;
+    // The versioned evidence intermediate the report was built from --
+    // rides the same publish path as index.html/spec.json so it's the
+    // citation gate's (weave-923) ground truth wherever the report lands.
+    std::fs::write(
+        out_dir.join("evidence-pack.json"),
+        serde_json::to_string_pretty(&evidence_pack)?,
+    )
+    .with_context(|| format!("writing {}/evidence-pack.json", out_dir.display()))?;
     publish::vendor_aesthetic_css(&out_dir, home)?;
     println!("{}", out_dir.join("index.html").display());
 
