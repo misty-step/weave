@@ -1,10 +1,12 @@
 mod assemble;
+mod citation_gate;
 mod pack;
 mod publish;
 mod render;
 mod secrets;
 mod sources;
 mod spec;
+mod synthesis;
 mod window;
 
 use std::path::PathBuf;
@@ -13,7 +15,8 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
 
-use sources::{SourceNote, bb, feed, git, powder, receipts};
+use sources::{SourceNote, bb, feed, git, moments, powder, receipts};
+use spec::{Footer, Narrative, NarrativeStatus};
 use window::RetroWindow;
 
 /// Generate a fleet-wide agent-activity retro over a time window (daily,
@@ -60,9 +63,33 @@ struct Cli {
     #[arg(long, env = "FLEET_RETRO_BB_PLANE")]
     bb_plane: Option<String>,
 
+    /// Path to Bitterblossom's moment-scorer.py (omit to derive
+    /// <dev-root>/bitterblossom/scripts/moment-scorer.py)
+    #[arg(long, env = "FLEET_RETRO_MOMENT_SCORER_SCRIPT")]
+    moment_scorer_script: Option<PathBuf>,
+
+    /// Path to the moment-scorer's own moments.db (omit to derive
+    /// <bb-plane>/.bb/moments.db; skipped entirely without --bb-plane)
+    #[arg(long, env = "FLEET_RETRO_MOMENTS_DB")]
+    moments_db: Option<PathBuf>,
+
     /// Max Powder cards to inspect for in-window movements
     #[arg(long, default_value_t = 300)]
     card_limit: u32,
+
+    /// Skip the model synthesis stage entirely: always render the
+    /// deterministic tables-only report, as if every synthesis attempt had
+    /// failed open. Useful for dry runs and local iteration without
+    /// spending OpenRouter budget.
+    #[arg(long)]
+    no_synthesis: bool,
+
+    /// Directory for durable synthesis metrics (pack-assembly-latency.jsonl)
+    /// -- recorded from the first run on, per the pull-federation falsifier
+    /// (weave-923): if pack assembly ever exceeds report cadence, the fix is
+    /// a cached pull snapshot, not event-sourcing.
+    #[arg(long, env = "FLEET_RETRO_METRICS_DIR")]
+    metrics_dir: Option<PathBuf>,
 
     /// Output directory for the rendered report (default: a dated dir under --out-root).
     /// Ignored when --scheduled is set (each window gets its own dated dir).
@@ -93,6 +120,47 @@ fn home_dir() -> Result<PathBuf> {
     std::env::var("HOME")
         .map(PathBuf::from)
         .context("HOME is not set")
+}
+
+/// Append one JSONL line recording this run's pack-assembly latency to a
+/// durable metrics log, starting with the very first run (oracle finding
+/// ruled binding, weave-923: "Pack-assembly latency (p95) recorded from the
+/// first run — it is the named falsifier for pull-federation"). A true p95
+/// needs many samples; this makes sure they exist to compute one from,
+/// without blocking a single run on that computation. Best-effort: a
+/// logging failure here must never fail the report itself.
+fn record_pack_assembly_latency(cli: &Cli, home: &std::path::Path, window: &RetroWindow, ms: u64) {
+    let dir = cli
+        .metrics_dir
+        .clone()
+        .unwrap_or_else(|| home.join(".factory-lanes").join("fleet-retro"));
+    if let Err(err) = std::fs::create_dir_all(&dir) {
+        eprintln!(
+            "fleet-retro: could not create metrics dir {}: {err}",
+            dir.display()
+        );
+        return;
+    }
+    let line = serde_json::json!({
+        "ts": Utc::now().to_rfc3339(),
+        "window_label": window.label,
+        "pack_assembly_ms": ms,
+    });
+    let path = dir.join("pack-assembly-latency.jsonl");
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)?;
+        writeln!(file, "{line}")
+    })();
+    if let Err(err) = result {
+        eprintln!(
+            "fleet-retro: could not append pack-assembly latency to {}: {err}",
+            path.display()
+        );
+    }
 }
 
 fn resolve_window(cli: &Cli, now: DateTime<Utc>) -> Result<RetroWindow> {
@@ -149,6 +217,7 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     );
 
     let mut notes: Vec<SourceNote> = Vec::new();
+    let assembly_start = std::time::Instant::now();
 
     // --- git activity across every discovered repo -------------------------
     let repos = git::discover_repos(&dev_root);
@@ -219,9 +288,35 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     // --- campaign receipts ----------------------------------------------------
     let campaign_receipts = receipts::collect_receipts(&campaign_dir, &window);
 
+    // --- moment-scorer anomaly cards (weave-923) -----------------------------
+    let moment_scorer_script = cli.moment_scorer_script.clone().unwrap_or_else(|| {
+        dev_root
+            .join("bitterblossom")
+            .join("scripts")
+            .join("moment-scorer.py")
+    });
+    let moments_db = cli.moments_db.clone().or_else(|| {
+        cli.bb_plane
+            .as_deref()
+            .map(|plane| std::path::Path::new(plane).join(".bb").join("moments.db"))
+    });
+    let moment_cards = moments::collect_moments(
+        moment_scorer_script
+            .is_file()
+            .then_some(moment_scorer_script.as_path()),
+        moments_db.as_deref(),
+        &window,
+    );
+    if moments_db.is_none() {
+        notes.push(SourceNote::new(
+            "moments",
+            "no --bb-plane/--moments-db configured; skipped".to_string(),
+        ));
+    }
+
     // --- evidence pack: the versioned intermediate every collector's
     // output projects into before RetroSpec assembly ever sees it. This is
-    // the seam weave-923's synthesis stage and citation gate build on next.
+    // the seam weave-923's synthesis stage and citation gate build on.
     let evidence_pack = pack::build_pack(
         &window,
         &repo_activity,
@@ -229,10 +324,62 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         &bb_runs,
         &feed_events,
         &campaign_receipts,
+        &moment_cards,
     );
+    let pack_assembly_ms = assembly_start.elapsed().as_millis() as u64;
+    record_pack_assembly_latency(cli, home, &window, pack_assembly_ms);
+
+    // --- synthesis stage + citation gate (weave-923) -------------------------
+    // Cheap-default/escalate-on-failure model routing, bounded retries, and
+    // fail-open to a deterministic tables-only report are all inside
+    // `synthesis::synthesize` -- this call site only decides WHETHER to
+    // attempt synthesis at all (`--no-synthesis`, or no OpenRouter key
+    // configured, both degrade to the same fail-open shape `synthesize`
+    // itself produces on exhausted attempts).
+    let (narrative, judge, gate_status) = if cli.no_synthesis {
+        (
+            Narrative {
+                status: NarrativeStatus::FailedOpen {
+                    reason: "--no-synthesis set; skipped".to_string(),
+                },
+            },
+            "none".to_string(),
+            "skipped: --no-synthesis".to_string(),
+        )
+    } else {
+        match synthesis::OpenRouterClient::from_env() {
+            Some(client) => {
+                let outcome = synthesis::synthesize(&client, &evidence_pack);
+                (outcome.narrative, outcome.judge, outcome.gate_status)
+            }
+            None => (
+                Narrative {
+                    status: NarrativeStatus::FailedOpen {
+                        reason: "OPENROUTER_API_KEY not configured; skipped".to_string(),
+                    },
+                },
+                "none".to_string(),
+                "fail-open: OPENROUTER_API_KEY not configured".to_string(),
+            ),
+        }
+    };
+    let footer = Footer {
+        judge,
+        gate_status,
+        prompt_version: synthesis::PROMPT_VERSION.to_string(),
+        pack_schema_version: evidence_pack.schema_version.clone(),
+        pack_assembly_ms,
+    };
 
     let generated_at = now.to_rfc3339();
-    let retro_spec = assemble::build_spec(&window, &generated_at, &evidence_pack, notes)?;
+    let retro_spec = assemble::build_spec(
+        &window,
+        &generated_at,
+        &evidence_pack,
+        narrative,
+        footer,
+        notes,
+    )?;
 
     if cli.dry_run {
         println!("{}", serde_json::to_string_pretty(&retro_spec)?);
@@ -305,13 +452,14 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
             .len()
     );
     let feed_body = format!(
-        "Covers {} → {}. {} repos swept, {} feed events, {} bb runs, {} receipts.",
+        "Covers {} → {}. {} repos swept, {} feed events, {} bb runs, {} receipts, {} moment cards.",
         window.since,
         window.until,
         repo_activity.len(),
         feed_events.len(),
         bb_runs.len(),
-        campaign_receipts.len()
+        campaign_receipts.len(),
+        moment_cards.len()
     );
     publish::post_feed_report(home, &feed_title, &feed_body, report_url.as_deref());
 

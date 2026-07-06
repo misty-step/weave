@@ -11,7 +11,7 @@ use serde::Serialize;
 /// (`render::render_html`) only depends on this module, so swapping in a
 /// shared primitive later means retargeting one function, not rewriting the
 /// collectors.
-pub const CATALOG_VERSION: &str = "weave-fleet-retro-001";
+pub const CATALOG_VERSION: &str = "weave-fleet-retro-002";
 
 /// Spec-first: every collector's output gets assembled into this typed
 /// structure *before* any HTML is produced. The renderer is a pure function
@@ -63,10 +63,12 @@ impl RetroSpec {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Component {
     Hero(Hero),
+    Narrative(Narrative),
     StatCallouts(StatCallouts),
     RepoActivityTable(RepoActivityTable),
     Timeline(Timeline),
     Receipts(Receipts),
+    Footer(Footer),
     Provenance(Provenance),
 }
 
@@ -128,6 +130,55 @@ pub struct ReceiptRow {
     pub path: String,
     pub cards: Vec<String>,
     pub at: String,
+}
+
+/// The model-synthesized "what mattered" section (weave-923): significance-
+/// ranked prose over the window's `EvidencePack`, every factual claim
+/// carrying an inline `[id]` citation to a pack item. `Ok` only after the
+/// citation gate (`citation_gate.rs`) has accepted the text -- a citation
+/// gate rejection or an unreachable model degrades to `FailedOpen` with a
+/// visible reason, never a silently-empty or half-cited narrative.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct Narrative {
+    pub status: NarrativeStatus,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum NarrativeStatus {
+    Ok {
+        blocks: Vec<String>,
+        citations: Vec<Citation>,
+    },
+    FailedOpen {
+        reason: String,
+    },
+}
+
+/// One pack item the narrative cited, carried alongside the narrative text
+/// so `render.rs` can turn an inline `[id]` token into a hover/tap link
+/// without needing direct access to the full `EvidencePack` (the renderer
+/// stays a pure function of `RetroSpec` alone).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct Citation {
+    pub id: String,
+    pub title: String,
+}
+
+/// Diagnosability metadata for the synthesis stage, rendered as a visible
+/// report footer (oracle-ruled binding, weave-923 card comments): which
+/// model judged the narrative (or "none" on fail-open), what the citation
+/// gate decided and on which attempt, which prompt/pack schema versions
+/// were in play, and how long pack assembly took -- the named falsifier for
+/// pull-federation (if this ever exceeds report cadence, the fix is a
+/// cached pull snapshot, not event-sourcing).
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct Footer {
+    pub judge: String,
+    pub gate_status: String,
+    pub prompt_version: String,
+    pub pack_schema_version: String,
+    pub pack_assembly_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

@@ -47,16 +47,26 @@ labels), `status`, `payload`.
 
 ## weave.evidence-pack.v1
 
-**Introduced:** 2026-07-06 · **Commit:** (this PR, weave-922, child of the
-weave-920 Evidence Pipeline v2 epic)
+**Introduced:** 2026-07-06 · **Commit:** (weave-922, child of the weave-920
+Evidence Pipeline v2 epic)
+
+**Extended:** 2026-07-06 · weave-923 added a sixth collector (moment-scorer
+anomaly cards from Bitterblossom's flight-recorder, `source` prefix
+`moment:`, `kind` is the scorer's own class name --
+`failure`/`recovery`/`cost_anomaly`/`surprise`) as an additive item source,
+and made the pack the input the synthesis stage and citation gate read
+directly. The item shape (`{id, ts, source, kind, title, refs[], excerpt}`)
+did not change, so the schema version stayed at v1 -- the same kind of
+growth receipts (weave-921) already went through, 4 sources to 5, without a
+version bump.
 
 Versioned intermediate between fleet-retro's collectors (git, Powder, bb,
-feed, campaign receipts) and everything downstream of them: RetroSpec
-assembly today, the weave-923 synthesis stage and citation gate next. Every
-collector projects its native output into zero or more generic evidence
-items rather than RetroSpec assembly reading five differently-shaped
-collector structs directly — a new collector or a new report kind extends
-the pack, not everything downstream of it. Serializes to
+feed, campaign receipts, moment-scorer cards) and everything downstream of
+them: RetroSpec assembly, and (weave-923) the model synthesis stage +
+deterministic citation gate. Every collector projects its native output into
+zero or more generic evidence items rather than RetroSpec assembly reading
+differently-shaped collector structs directly — a new collector or a new
+report kind extends the pack, not everything downstream of it. Serializes to
 `evidence-pack.json` beside every rendered report
 (`apps/fleet-retro/src/pack.rs`).
 
@@ -65,17 +75,17 @@ the pack, not everything downstream of it. Serializes to
 source-specific identifying parts (e.g. repo+commit-hash), not random, so
 the same evidence always gets the same id. `refs` is a small ad-hoc tag list
 (`"repo:landmark"`, `"card:landmark-907"`, `"pr:200"`) rather than
-per-source struct fields — a consumer that only understands the five fixed
+per-source struct fields — a consumer that only understands the six fixed
 fields still gets `title`/`excerpt`/`ts`, while a consumer needing
 source-specific structure (RetroSpec assembly's per-repo rollups) parses the
 tags it recognizes.
 
 **Dispatch note:** consumers must key on an item's `source` prefix
-(`git:`/`powder:`/`bb:`/`feed:`/`receipt:`) before `kind` — feed-post's own
-`KNOWN_KINDS` enum reserves `"receipt"` as a valid feed-post kind (receipt
-mirrors), which collides with the campaign-receipts collector's own
-`"receipt"` kind. Every collector stamps a distinct source prefix
-specifically so this is resolvable without ambiguity.
+(`git:`/`powder:`/`bb:`/`feed:`/`receipt:`/`moment:`) before `kind` —
+feed-post's own `KNOWN_KINDS` enum reserves `"receipt"` as a valid feed-post
+kind (receipt mirrors), which collides with the campaign-receipts
+collector's own `"receipt"` kind. Every collector stamps a distinct source
+prefix specifically so this is resolvable without ambiguity.
 
 **Regression discipline:** any change to `pack.rs` or `assemble.rs`'s
 consumption of it must be checked against a byte-identical rendered-HTML
@@ -83,3 +93,36 @@ diff for a fixed past window before merging (weave-922's own acceptance
 criterion) — the pack is an internal refactor of an already-shipped
 renderer, not a new surface, so its introduction must not change what the
 operator sees.
+
+---
+
+## weave-fleet-retro-002 (page-spec catalog version)
+
+**Introduced:** 2026-07-06 · weave-923, child of the weave-920 Evidence
+Pipeline v2 epic. Bumped from `weave-fleet-retro-001` (see `CATALOG_VERSION`
+in `apps/fleet-retro/src/spec.rs`) because the `Component` catalog gained
+two new variants: `Narrative` (the model-synthesized "what mattered"
+section, leading the report; tables demoted to appendix below it) and
+`Footer` (synthesis diagnosability metadata, immediately before
+`Provenance`). Existing components (`Hero`, `StatCallouts`,
+`RepoActivityTable`, `Timeline`, `Receipts`, `Provenance`) are unchanged.
+
+**Synthesis stage (`apps/fleet-retro/src/synthesis.rs`):** an `EvidencePack`
+goes in, a significance-ranked narrative comes out, every claim carrying an
+inline `[id]` citation to a pack item. Cheap-default/escalate-on-failure
+model routing: two attempts on a cheap OpenRouter model
+(`deepseek/deepseek-v4-flash`), one escalated attempt
+(`moonshotai/kimi-k2.7-code`) on repeated gate failure, then fail-open to a
+deterministic tables-only report with a visible banner — never more than
+three attempts, never a half-cited narrative. The judge model, gate outcome,
+prompt version, pack schema version, and pack-assembly latency all ride the
+report footer (oracle findings ruled binding 2026-07-06, SRE-postmortem
+diagnosability convention).
+
+**Citation gate (`apps/fleet-retro/src/citation_gate.rs`):** deterministic,
+external, and forever tier-1-only per the same oracle ruling — an existence
+check (every `[id]` token must name a real pack item) plus a structural
+uncited-claim check (every non-heading narrative line must carry at least
+one citation token). No claim-level entailment, no model judgment inside the
+gate itself; a heavier entailment tier is an explicitly deferred later
+child, not folded into this one.

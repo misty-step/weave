@@ -1,4 +1,4 @@
-use crate::spec::{Component, RetroSpec};
+use crate::spec::{Component, NarrativeStatus, RetroSpec};
 
 /// Page-specific CSS layered over the vendored `aesthetic.css`, in the same
 /// pattern bridge.py uses (base kit + a small `<style>` override block).
@@ -32,6 +32,13 @@ const RETRO_CSS: &str = r#"
 .retro-provenance{font-size:.82rem;color:var(--ae-ink-muted);}
 .retro-provenance ul{margin:0;padding-left:1.1rem;}
 .retro-empty{color:var(--ae-ink-faint);font-style:italic;}
+.retro-narrative p{margin:0 0 var(--ae-space-3,.75rem);line-height:1.55;}
+.retro-narrative .citation{font-family:var(--ae-font-mono);font-size:.78em;color:var(--ae-accent);text-decoration:none;}
+.retro-narrative .banner{border:1px solid var(--ae-line);border-radius:var(--ae-radius,.5rem);padding:var(--ae-space-3,.75rem);background:var(--ae-surface);color:var(--ae-ink-muted);font-style:italic;}
+.retro-cited-evidence{list-style:none;margin:var(--ae-space-3,.75rem) 0 0;padding:0;font-size:.82rem;color:var(--ae-ink-muted);}
+.retro-cited-evidence li{padding:.15rem 0;}
+.retro-cited-evidence code{font-size:.78em;}
+.retro-footer{font-size:.8rem;color:var(--ae-ink-faint);border-top:1px solid var(--ae-line);padding-top:var(--ae-space-3,.75rem);}
 "#;
 
 fn esc(text: &str) -> String {
@@ -41,6 +48,24 @@ fn esc(text: &str) -> String {
         .replace('"', "&quot;")
 }
 
+fn citation_token_regex() -> regex::Regex {
+    regex::Regex::new(r"\[([0-9a-f]{16})\]").expect("static citation-token pattern is valid")
+}
+
+/// Turn every `[id]` citation token in an already-HTML-escaped narrative
+/// block into a hover/tap link anchored to that item's entry in the "Cited
+/// evidence" list below the narrative. Escaping first is safe here: none of
+/// `esc`'s substitutions touch `[`, `]`, or hex digits, so the citation
+/// token survives escaping unchanged and this regex still matches it.
+fn linkify_citations(escaped_block: &str) -> String {
+    citation_token_regex()
+        .replace_all(escaped_block, |caps: &regex::Captures| {
+            let id = &caps[1];
+            format!(r##"<a href="#cite-{id}" class="citation">[{id}]</a>"##)
+        })
+        .into_owned()
+}
+
 fn render_component(component: &Component) -> String {
     match component {
         Component::Hero(hero) => format!(
@@ -48,6 +73,32 @@ fn render_component(component: &Component) -> String {
             esc(&hero.headline),
             esc(&hero.subhead)
         ),
+        Component::Narrative(narrative) => match &narrative.status {
+            NarrativeStatus::Ok { blocks, citations } => {
+                let paragraphs: String = blocks
+                    .iter()
+                    .map(|block| format!("<p>{}</p>", linkify_citations(&esc(block))))
+                    .collect();
+                let cited: String = citations
+                    .iter()
+                    .map(|c| {
+                        format!(
+                            r#"<li id="cite-{}"><code>[{}]</code> {}</li>"#,
+                            esc(&c.id),
+                            esc(&c.id),
+                            esc(&c.title)
+                        )
+                    })
+                    .collect();
+                format!(
+                    r#"<section class="retro-section retro-narrative"><h2>What mattered</h2>{paragraphs}<ul class="retro-cited-evidence">{cited}</ul></section>"#
+                )
+            }
+            NarrativeStatus::FailedOpen { reason } => format!(
+                r#"<section class="retro-section retro-narrative"><h2>What mattered</h2><p class="banner">Narrative synthesis unavailable this run ({}). Showing the deterministic tables below.</p></section>"#,
+                esc(reason)
+            ),
+        },
         Component::StatCallouts(stats) => {
             if stats.items.is_empty() {
                 return String::new();
@@ -142,6 +193,14 @@ fn render_component(component: &Component) -> String {
                 r#"<section class="retro-section"><h2>Receipts</h2><ul class="retro-receipts">{items}</ul></section>"#
             )
         }
+        Component::Footer(footer) => format!(
+            r#"<footer class="retro-footer">judge: <code>{}</code> · gate: {} · prompt: <code>{}</code> · pack: <code>{}</code> · pack assembly: {}ms</footer>"#,
+            esc(&footer.judge),
+            esc(&footer.gate_status),
+            esc(&footer.prompt_version),
+            esc(&footer.pack_schema_version),
+            footer.pack_assembly_ms
+        ),
         Component::Provenance(provenance) => {
             let items: String = provenance
                 .notes

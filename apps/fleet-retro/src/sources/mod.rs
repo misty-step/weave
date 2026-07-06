@@ -1,6 +1,7 @@
 pub mod bb;
 pub mod feed;
 pub mod git;
+pub mod moments;
 pub mod powder;
 pub mod receipts;
 

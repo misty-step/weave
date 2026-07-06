@@ -2,11 +2,14 @@
 
 `apps/fleet-retro` generates a retro over an arbitrary time window covering
 everything the fleet's agents did: git commits/PRs per repo, Powder card
-movements, Bitterblossom plane runs, Bridge feed events, and campaign
-receipts. Every collector projects into a versioned `EvidencePack`
-(`src/pack.rs`, `weave.evidence-pack.v1` -- see the schema changelog), which
-`assemble.rs` turns into a spec-first page spec (`src/spec.rs`) rendered by
-a deterministic HTML renderer (`src/render.rs`) styled with the Misty Step
+movements, Bitterblossom plane runs and moment-scorer anomaly cards, Bridge
+feed events, and campaign receipts. Every collector projects into a
+versioned `EvidencePack` (`src/pack.rs`, `weave.evidence-pack.v1` -- see the
+schema changelog), which a model synthesis stage (`src/synthesis.rs`) turns
+into a cited significance-ranked narrative gated by a deterministic citation
+gate (`src/citation_gate.rs`), and `assemble.rs` turns the pack plus that
+narrative into a spec-first page spec (`src/spec.rs`) rendered by a
+deterministic HTML renderer (`src/render.rs`) styled with the Misty Step
 Aesthetic, then pushed to the bastion artifact shelf with a `kind=report`
 entry posted to the Bridge feed so it shows up at Sanctum → Bridge.
 
@@ -16,9 +19,57 @@ everything that all of our agents across the weave did across all of our
 applications over the past 24 hours." Extended by weave-920 (Evidence
 Pipeline v2, operator directive 2026-07-06): collectors read sources of
 truth at synthesis time (pull-federation, not event-sourcing -- no mirrors,
-no capture daemons), pack into one versioned intermediate, and feed toward a
-future model-synthesis stage and citation gate (weave-923) that this repo's
-other report kinds (briefings, incidents, audits) can ride too.
+no capture daemons), pack into one versioned intermediate (weave-922), then
+(weave-923) a model writes the narrative and a deterministic gate proves
+every claim cites a real pack item -- the same spine this repo's other
+report kinds (briefings, incidents, audits) can ride too.
+
+## Synthesis stage + citation gate (weave-923)
+
+The report's lead section is no longer a formatted log -- it's a model-
+written narrative (`synthesis::synthesize`) that reads the whole
+`EvidencePack` and writes what mattered, significance-ranked, every claim
+carrying an inline `[id]` citation. Routing is cheap-default/escalate-on-
+failure, oracle findings ruled binding 2026-07-06:
+
+1. Try a cheap OpenRouter model (`deepseek/deepseek-v4-flash`) twice --
+   the second attempt absorbs a transient formatting miss, not a capability
+   gap.
+2. Escalate once to a stronger model (`moonshotai/kimi-k2.7-code`) if both
+   cheap attempts failed the gate.
+3. **Fail open** to the deterministic tables-only report with a visible
+   banner if all three attempts either can't reach the model or keep
+   failing the gate. Never a half-cited narrative, never more than three
+   attempts.
+
+The citation gate (`citation_gate::validate_citations`) is deterministic,
+external to the synthesis prompt, and stays that way forever (Governance
+Decay, arXiv:2606.22528, cited in the oracle research this card's design
+rests on) -- it is tier 1 of a cheapest-first cascade only: an existence
+check (every `[id]` token must name a real pack item; catches most
+fabrication per CiteCheck, arXiv:2605.27700) plus a structural check that
+every non-heading narrative line carries at least one citation. Claim-level
+entailment (does the cited item actually *support* this specific sentence)
+is an explicitly deferred later child, not folded into this gate.
+
+Every run's judge model, gate outcome, prompt version
+(`synthesis::PROMPT_VERSION`), pack schema version, and pack-assembly
+latency ride the rendered report's footer (`Component::Footer`) --
+diagnosability convention borrowed from SRE postmortems: snapshot every
+input version so a bad report can be traced back later. Pack-assembly
+latency is also appended to a durable `pack-assembly-latency.jsonl` starting
+from the very first run (`--metrics-dir`/`FLEET_RETRO_METRICS_DIR`) -- it is
+the named falsifier for pull-federation: if it ever exceeds report cadence,
+the fix is a cached pull snapshot, not event-sourcing.
+
+Live-verified (not just unit-tested): a real run against live fleet data
+produced a genuine fabricated citation on attempt 1, correctly rejected by
+the gate, then a legitimate gate-passing narrative on attempt 2 -- proving
+the escalation-before-failure routing end to end against a real model, not
+a scripted double. A second live run with `OPENROUTER_API_KEY` unset proved
+the fail-open path renders the deterministic tables-only report with the
+banner. See `~/.factory-lanes/campaign/weave-923-evidence/` for the captured
+HTML/evidence-pack artifacts from both runs.
 
 ## Why this shape
 
@@ -146,6 +197,7 @@ references it.
 | Bitterblossom plane runs | `sources::bb` | Shells out to `bb --config <plane> runs list --json`. No default plane is assumed -- pass `--bb-plane <path>` (or `FLEET_RETRO_BB_PLANE`) explicitly; there is no single fleet-wide plane in active use as of this writing (`bb-dashboard/plane` exists locally but had zero run history at build time). |
 | Bridge feed events | `sources::feed` | Reads `~/.factory-lanes/feed/*.jsonl`, filtering to feed-post's known `kind` set. **Important:** `~/.factory-lanes/feed/*.jsonl` is shared with at least one other producer (`counterspell`'s `weave.remote_event.v1` session-routing telemetry) whose lines are valid JSON but not feed-post entries -- the parser filters on a closed `kind` allowlist rather than "did it parse as JSON" specifically to exclude that noise (`sources::feed::tests::skips_foreign_schema_lines_sharing_the_same_file` is the regression test for this, built from a real line observed in `~/.factory-lanes/feed/2026-07-05.jsonl`). |
 | Campaign receipts | `sources::receipts` | Reads `~/.factory-lanes/campaign/*.md` (157+ files as of weave-921), the fleet's richest narrative source until now consumed by nothing. Reads a minimal frontmatter block (`ts`, `cards`; see the factory-ops repo's `docs/posting-contract.md`) new receipts write and backfilled receipts were given by `~/.factory-lanes/scripts/backfill-receipt-frontmatter.py`, falling back to file mtime for receipts that predate the convention. Renders as a dedicated "Receipts" section (title + ~40-word excerpt + cards), not folded into the timeline. |
+| Moment-scorer anomaly cards | `sources::moments` | Shells out to `python3 <script> list --moments-db <db> --json`, reading Bitterblossom's flight-recorder scorer's own published (already ≤3/day-capped) review queue as an external contract. No single fleet-wide moments store exists yet -- pass `--bb-plane` (derives `<plane>/.bb/moments.db`) or explicit `--moment-scorer-script`/`--moments-db` (`FLEET_RETRO_MOMENT_SCORER_SCRIPT`/`FLEET_RETRO_MOMENTS_DB`). Rolls up into the same `bb:{task}` repo bucket a regular bb-run item uses; foregrounded explicitly in the synthesis prompt as curated anomaly signal. |
 | Deploys | *(not yet a dedicated source)* | Surfaces indirectly today via feed entries whose title/body mention a deploy, and via PR merges. A dedicated Fly/deploy-log collector is a natural follow-up but was out of scope for this pass; noted here rather than silently claimed as covered. |
 
 ## Tests

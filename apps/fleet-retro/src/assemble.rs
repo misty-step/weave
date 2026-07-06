@@ -46,10 +46,13 @@ fn derive_feed_repo(agent: &str) -> String {
 /// receipt mirrors), which collides with the campaign-receipts collector's
 /// `"receipt"` kind -- the source prefix disambiguates them unambiguously
 /// since every collector already stamps a distinct one.
+#[allow(clippy::too_many_arguments)]
 pub fn build_spec(
     window: &RetroWindow,
     generated_at: &str,
     pack: &EvidencePack,
+    narrative: Narrative,
+    footer: Footer,
     mut notes: Vec<SourceNote>,
 ) -> anyhow::Result<RetroSpec> {
     let mut repos: BTreeMap<String, RepoRollup> = BTreeMap::new();
@@ -62,6 +65,7 @@ pub fn build_spec(
     let mut total_feed_events = 0usize;
     let mut total_card_movements = 0usize;
     let mut total_receipts = 0usize;
+    let mut total_moments = 0usize;
 
     for item in &pack.items {
         // Dispatch on the *source* prefix first, not `kind` alone:
@@ -185,6 +189,26 @@ pub fn build_spec(
                 source: item.source.clone(),
                 link,
             });
+        } else if item.source.starts_with("moment:") {
+            // Rolls up into the same `bb:{task}` bucket a regular `bb-run`
+            // item uses (both describe that task's own runs) rather than a
+            // separate "moments" repo row -- an anomaly card is a fact
+            // *about* that task's runs, not a distinct activity source.
+            total_moments += 1;
+            let task = item.ref_value("task:").unwrap_or("unknown");
+            let repo = format!("bb:{task}");
+            let rollup = repos.entry(repo.clone()).or_default();
+            rollup
+                .highlights
+                .push((item.ts.clone(), format!("{}: {}", item.kind, item.excerpt)));
+            timeline.push(TimelineEntry {
+                at: item.ts.clone(),
+                repo,
+                kind: format!("moment-{}", item.kind),
+                summary: item.title.clone(),
+                source: item.source.clone(),
+                link: None,
+            });
         }
         // An item from an unrecognized source is ignored rather than
         // failing the whole report, matching every collector's own "one
@@ -238,6 +262,12 @@ pub fn build_spec(
         notes.push(SourceNote::new(
             "receipts",
             format!("{total_receipts} campaign receipt(s) in window"),
+        ));
+    }
+    if total_moments > 0 {
+        notes.push(SourceNote::new(
+            "moments",
+            format!("{total_moments} moment-scorer anomaly card(s) in window"),
         ));
     }
 
@@ -306,6 +336,10 @@ pub fn build_spec(
             value: total_receipts.to_string(),
         },
         StatCallout {
+            label: "Moments".into(),
+            value: total_moments.to_string(),
+        },
+        StatCallout {
             label: "Window".into(),
             value: format!("{}h", window.duration_hours()),
         },
@@ -328,12 +362,17 @@ pub fn build_spec(
                     window.duration_hours()
                 ),
             }),
+            // Narrative leads; the tables below it are the appendix (card
+            // acceptance: "Daily retro leads with a cited narrative section;
+            // tables demoted to appendix").
+            Component::Narrative(narrative),
             Component::StatCallouts(StatCallouts { items: stat_items }),
             Component::RepoActivityTable(RepoActivityTable { rows }),
             Component::Timeline(Timeline { entries: timeline }),
             Component::Receipts(Receipts {
                 items: receipt_rows,
             }),
+            Component::Footer(footer),
             Component::Provenance(Provenance { notes: notes_view }),
         ],
     };
@@ -355,6 +394,29 @@ mod tests {
         RetroWindow::custom(ts(2026, 7, 4, 21, 0, 0), ts(2026, 7, 5, 21, 0, 0)).unwrap()
     }
 
+    /// A neutral stand-in for the synthesis stage's output -- these tests
+    /// exercise repo/timeline/receipts/provenance assembly, not narrative
+    /// rendering (that's `synthesis.rs`/`citation_gate.rs`'s own test
+    /// coverage), so a fixed fail-open stub keeps every call site here
+    /// honest about what it's actually testing.
+    fn stub_narrative() -> Narrative {
+        Narrative {
+            status: NarrativeStatus::FailedOpen {
+                reason: "not exercised by this test".to_string(),
+            },
+        }
+    }
+
+    fn stub_footer() -> Footer {
+        Footer {
+            judge: "none".to_string(),
+            gate_status: "not exercised by this test".to_string(),
+            prompt_version: "test".to_string(),
+            pack_schema_version: "test".to_string(),
+            pack_assembly_ms: 0,
+        }
+    }
+
     #[test]
     fn assembles_a_spec_that_names_every_source() {
         let activity = vec![RepoActivity {
@@ -368,12 +430,20 @@ mod tests {
             }],
             pr_numbers: vec!["200".into()],
         }];
-        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
         assert!(spec.validate().is_ok());
-        let Component::RepoActivityTable(table) = &spec.components[2] else {
-            panic!("expected repo table at index 2");
+        let Component::RepoActivityTable(table) = &spec.components[3] else {
+            panic!("expected repo table at index 3");
         };
         assert_eq!(table.rows.len(), 1);
         assert_eq!(table.rows[0].repo, "landmark");
@@ -394,11 +464,19 @@ mod tests {
 
     #[test]
     fn empty_evidence_still_produces_a_valid_spec_with_explicit_zeros() {
-        let pack = build_pack(&window(), &[], &[], &[], &[], &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &[], &[], &[], &[], &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
         assert!(spec.validate().is_ok());
-        let Component::StatCallouts(stats) = &spec.components[1] else {
-            panic!("expected stats at index 1");
+        let Component::StatCallouts(stats) = &spec.components[2] else {
+            panic!("expected stats at index 2");
         };
         assert_eq!(stats.items[0].value, "0");
     }
@@ -413,12 +491,20 @@ mod tests {
             ts: "2026-07-05T04:00:00+00:00".into(),
             source: "receipt:/receipts/weave-908-report.md".into(),
         }];
-        let pack = build_pack(&window(), &[], &[], &[], &[], &receipts);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &[], &[], &[], &[], &receipts, &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
         assert!(spec.validate().is_ok());
-        let Component::Receipts(receipts_component) = &spec.components[4] else {
-            panic!("expected receipts component at index 4");
+        let Component::Receipts(receipts_component) = &spec.components[5] else {
+            panic!("expected receipts component at index 5");
         };
         assert_eq!(receipts_component.items.len(), 1);
         assert_eq!(
@@ -454,11 +540,19 @@ mod tests {
             links: vec![],
             source: "feed:/day.jsonl".into(),
         }];
-        let pack = build_pack(&window(), &[], &[], &[], &feed_events, &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &[], &[], &[], &feed_events, &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
-        let Component::StatCallouts(stats) = &spec.components[1] else {
-            panic!("expected stats at index 1");
+        let Component::StatCallouts(stats) = &spec.components[2] else {
+            panic!("expected stats at index 2");
         };
         let feed_stat = stats
             .items
@@ -475,8 +569,8 @@ mod tests {
             "a feed-sourced item with kind=receipt must not count as a campaign receipt"
         );
 
-        let Component::Receipts(receipts_component) = &spec.components[4] else {
-            panic!("expected receipts component at index 4");
+        let Component::Receipts(receipts_component) = &spec.components[5] else {
+            panic!("expected receipts component at index 5");
         };
         assert!(receipts_component.items.is_empty());
     }
@@ -489,11 +583,19 @@ mod tests {
             commits: vec![],
             pr_numbers: vec![],
         }];
-        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[2] else {
-            panic!("expected repo table at index 2");
+        let Component::RepoActivityTable(table) = &spec.components[3] else {
+            panic!("expected repo table at index 3");
         };
         assert_eq!(table.rows.len(), 1);
         assert_eq!(table.rows[0].commits, 0);
@@ -519,11 +621,19 @@ mod tests {
             commits: vec![],
             pr_numbers: vec!["34".into()],
         }];
-        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[2] else {
-            panic!("expected repo table at index 2");
+        let Component::RepoActivityTable(table) = &spec.components[3] else {
+            panic!("expected repo table at index 3");
         };
         assert_eq!(table.rows[0].commits, 0);
         assert_eq!(table.rows[0].prs, 1);
@@ -532,8 +642,8 @@ mod tests {
             "a merge-only PR reference has no commit timestamp to become a highlight"
         );
 
-        let Component::Timeline(timeline) = &spec.components[3] else {
-            panic!("expected timeline at index 3");
+        let Component::Timeline(timeline) = &spec.components[4] else {
+            panic!("expected timeline at index 4");
         };
         assert!(
             timeline.entries.is_empty(),
@@ -563,11 +673,19 @@ mod tests {
             summary: "completed".into(),
             source: "powder:card:landmark-907".into(),
         }];
-        let pack = build_pack(&window(), &activity, &card_movements, &[], &[], &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &activity, &card_movements, &[], &[], &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
-        let Component::RepoActivityTable(table) = &spec.components[2] else {
-            panic!("expected repo table at index 2");
+        let Component::RepoActivityTable(table) = &spec.components[3] else {
+            panic!("expected repo table at index 3");
         };
         assert_eq!(table.rows.len(), 1, "git and powder activity share one row");
         assert_eq!(table.rows[0].commits, 1);
@@ -594,11 +712,19 @@ mod tests {
             links: vec![],
             source: "feed:/day.jsonl".into(),
         }];
-        let pack = build_pack(&window(), &[], &[], &bb_runs, &feed_events, &[]);
-        let spec = build_spec(&window(), "2026-07-05T21:00:05Z", &pack, vec![]).unwrap();
+        let pack = build_pack(&window(), &[], &[], &bb_runs, &feed_events, &[], &[]);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
 
-        let Component::Timeline(timeline) = &spec.components[3] else {
-            panic!("expected timeline at index 3");
+        let Component::Timeline(timeline) = &spec.components[4] else {
+            panic!("expected timeline at index 4");
         };
         assert_eq!(timeline.entries.len(), 2);
 
@@ -607,5 +733,115 @@ mod tests {
         };
         assert!(provenance.notes.iter().any(|n| n.source == "bb"));
         assert!(provenance.notes.iter().any(|n| n.source == "feed"));
+    }
+
+    #[test]
+    fn moment_items_roll_up_into_the_same_bb_task_bucket_and_get_a_provenance_note() {
+        let bb_runs = vec![BbRun {
+            id: "run-1".into(),
+            task: "build".into(),
+            agent: "vulcan".into(),
+            state: "done".into(),
+            created_at: "2026-07-05T06:00:00+00:00".into(),
+            source: "bb:test-plane".into(),
+        }];
+        let moments = vec![crate::sources::moments::MomentCard {
+            run_id: "run-1".into(),
+            task: "build".into(),
+            class: "failure".into(),
+            excerpt: "attempt 1 failed: timeout".into(),
+            run_link: "bb runs show run-1 --json".into(),
+            created_at: "2026-07-05T06:05:00+00:00".into(),
+            source: "moment:test-plane/.bb/moments.db".into(),
+        }];
+        let pack = build_pack(&window(), &[], &[], &bb_runs, &[], &[], &moments);
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            stub_narrative(),
+            stub_footer(),
+            vec![],
+        )
+        .unwrap();
+
+        let Component::RepoActivityTable(table) = &spec.components[3] else {
+            panic!("expected repo table at index 3");
+        };
+        assert_eq!(
+            table.rows.len(),
+            1,
+            "the moment card rolls into the existing bb:build row, not a new one"
+        );
+        assert_eq!(table.rows[0].repo, "bb:build");
+
+        let Component::Timeline(timeline) = &spec.components[4] else {
+            panic!("expected timeline at index 4");
+        };
+        assert!(
+            timeline.entries.iter().any(|e| e.kind == "moment-failure"),
+            "a moment card becomes its own timeline entry, kind-prefixed with moment-"
+        );
+
+        let Component::StatCallouts(stats) = &spec.components[2] else {
+            panic!("expected stats at index 2");
+        };
+        let moments_stat = stats.items.iter().find(|s| s.label == "Moments").unwrap();
+        assert_eq!(moments_stat.value, "1");
+
+        let Component::Provenance(provenance) = spec.components.last().unwrap() else {
+            panic!("expected provenance last");
+        };
+        assert!(provenance.notes.iter().any(|n| n.source == "moments"));
+    }
+
+    #[test]
+    fn narrative_and_footer_pass_through_to_the_expected_component_slots() {
+        let pack = build_pack(&window(), &[], &[], &[], &[], &[], &[]);
+        let narrative = Narrative {
+            status: NarrativeStatus::Ok {
+                blocks: vec!["Landmark shipped a fix today [aaaaaaaaaaaaaaaa].".to_string()],
+                citations: vec![Citation {
+                    id: "aaaaaaaaaaaaaaaa".to_string(),
+                    title: "landmark shipped a fix".to_string(),
+                }],
+            },
+        };
+        let footer = Footer {
+            judge: "deepseek/deepseek-v4-flash".to_string(),
+            gate_status: "passed on attempt 1 of 3".to_string(),
+            prompt_version: "weave-fleet-retro-narrative-v1".to_string(),
+            pack_schema_version: pack.schema_version.clone(),
+            pack_assembly_ms: 42,
+        };
+
+        let spec = build_spec(
+            &window(),
+            "2026-07-05T21:00:05Z",
+            &pack,
+            narrative,
+            footer,
+            vec![],
+        )
+        .unwrap();
+
+        let Component::Narrative(rendered_narrative) = &spec.components[1] else {
+            panic!("expected narrative at index 1, right after hero");
+        };
+        assert!(matches!(
+            rendered_narrative.status,
+            NarrativeStatus::Ok { .. }
+        ));
+
+        let Component::Footer(rendered_footer) = &spec.components[6] else {
+            panic!("expected footer at index 6, right before provenance");
+        };
+        assert_eq!(rendered_footer.judge, "deepseek/deepseek-v4-flash");
+        assert_eq!(rendered_footer.pack_assembly_ms, 42);
+
+        assert!(matches!(
+            spec.components.last(),
+            Some(Component::Provenance(_))
+        ));
     }
 }

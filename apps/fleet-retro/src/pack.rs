@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::sources::bb::BbRun;
 use crate::sources::feed::FeedEvent;
 use crate::sources::git::{RepoActivity, parse_commit_time};
+use crate::sources::moments::MomentCard;
 use crate::sources::powder::CardMovement;
 use crate::sources::receipts::ReceiptItem;
 use crate::window::RetroWindow;
@@ -243,10 +244,40 @@ fn receipt_items(receipts: &[ReceiptItem]) -> Vec<EvidenceItem> {
         .collect()
 }
 
+/// `moment-scorer` items (weave-923): Bitterblossom's flight-recorder
+/// anomaly scorer (bitterblossom-914) already does the deterministic
+/// significance judgment (no model in that path at all) and publishes at
+/// most 3 cards/day fleet-wide -- this projection carries that curated,
+/// already-scored signal into the pack verbatim rather than re-deriving
+/// "was this surprising" from raw run data a second time. `kind` is the
+/// scorer's own class name (`failure`/`recovery`/`cost_anomaly`/`surprise`)
+/// so a consumer reading `kind` alone still gets a meaningful label; the
+/// `moment:` source prefix (not `kind`) is what `assemble.rs` dispatches on,
+/// matching every other source family's existing convention.
+fn moment_items(moments: &[MomentCard]) -> Vec<EvidenceItem> {
+    moments
+        .iter()
+        .map(|card| EvidenceItem {
+            id: stable_id(&["moment", &card.run_id, &card.created_at]),
+            ts: card.created_at.clone(),
+            source: card.source.clone(),
+            kind: card.class.clone(),
+            title: format!("{} — {} ({})", card.class, card.task, card.run_id),
+            refs: vec![
+                format!("task:{}", card.task),
+                format!("run:{}", card.run_id),
+                format!("class:{}", card.class),
+            ],
+            excerpt: card.excerpt.clone(),
+        })
+        .collect()
+}
+
 /// Assemble the versioned `EvidencePack` from every collector's already-
 /// fetched output. Pure (no I/O): the same "collectors fetch, this just
 /// projects" split `assemble::build_spec` already uses, so the projection
 /// logic is unit-testable against hand-built fixtures.
+#[allow(clippy::too_many_arguments)]
 pub fn build_pack(
     window: &RetroWindow,
     repo_activity: &[RepoActivity],
@@ -254,10 +285,11 @@ pub fn build_pack(
     bb_runs: &[BbRun],
     feed_events: &[FeedEvent],
     receipts: &[ReceiptItem],
+    moments: &[MomentCard],
 ) -> EvidencePack {
     // Deliberately NOT sorted by timestamp: this order (git, then Powder,
-    // then bb, then feed, then receipts -- each already in its own
-    // collector's native order) is exactly the order `assemble::build_spec`
+    // then bb, then feed, then receipts, then moments -- each already in its
+    // own collector's native order) is exactly the order `assemble::build_spec`
     // originally pushed same-timestamp evidence into a repo's highlight
     // list in, before this pack existed. `Vec::sort_by`'s stability means
     // insertion order is the tie-break whenever two items share a
@@ -270,6 +302,7 @@ pub fn build_pack(
     items.extend(bb_items(bb_runs));
     items.extend(feed_items(feed_events));
     items.extend(receipt_items(receipts));
+    items.extend(moment_items(moments));
 
     EvidencePack {
         schema_version: EVIDENCE_PACK_SCHEMA_VERSION.to_string(),
@@ -313,7 +346,7 @@ mod tests {
             commits: vec![],
             pr_numbers: vec![],
         }];
-        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[], &[]);
         assert_eq!(pack.items.len(), 1);
         assert_eq!(pack.items[0].kind, "repo-swept");
         assert_eq!(pack.items[0].ref_value("repo:"), Some("quiet-repo"));
@@ -327,14 +360,14 @@ mod tests {
             commits: vec![],
             pr_numbers: vec!["34".into()],
         }];
-        let pack = build_pack(&window(), &activity, &[], &[], &[], &[]);
+        let pack = build_pack(&window(), &activity, &[], &[], &[], &[], &[]);
         let pr_refs: Vec<_> = pack.items.iter().filter(|i| i.kind == "pr-ref").collect();
         assert_eq!(pr_refs.len(), 1);
         assert_eq!(pr_refs[0].ref_value("pr:"), Some("34"));
     }
 
     #[test]
-    fn all_five_collectors_emit_items() {
+    fn all_six_collectors_emit_items() {
         let activity = vec![RepoActivity {
             repo: "landmark".into(),
             source: "git:/dev/landmark".into(),
@@ -383,6 +416,15 @@ mod tests {
             ts: "2026-07-05T08:00:00+00:00".into(),
             source: "receipt:/receipts/weave-908-report.md".into(),
         }];
+        let moments = vec![MomentCard {
+            run_id: "run-1".into(),
+            task: "build".into(),
+            class: "failure".into(),
+            excerpt: "attempt 1 failed: timeout".into(),
+            run_link: "bb runs show run-1 --json".into(),
+            created_at: "2026-07-05T09:00:00+00:00".into(),
+            source: "moment:test-plane/.bb/moments.db".into(),
+        }];
 
         let pack = build_pack(
             &window(),
@@ -391,6 +433,7 @@ mod tests {
             &bb_runs,
             &feed_events,
             &receipts,
+            &moments,
         );
 
         assert_eq!(pack.schema_version, EVIDENCE_PACK_SCHEMA_VERSION);
@@ -402,6 +445,7 @@ mod tests {
             "bb-run",
             "shipped",
             "receipt",
+            "failure",
         ] {
             assert!(
                 pack.items.iter().any(|i| i.kind == kind),
@@ -432,12 +476,35 @@ mod tests {
                 source: "bb:p".into(),
             },
         ];
-        let pack = build_pack(&window(), &[], &[], &bb_runs, &[], &[]);
+        let pack = build_pack(&window(), &[], &[], &bb_runs, &[], &[], &[]);
         let timestamps: Vec<&str> = pack.items.iter().map(|i| i.ts.as_str()).collect();
         assert_eq!(
             timestamps,
             vec!["2026-07-05T01:00:00+00:00", "2026-07-05T12:00:00+00:00"]
         );
+    }
+
+    #[test]
+    fn moment_item_carries_the_scorers_own_class_as_kind_and_task_run_class_as_refs() {
+        let moments = vec![MomentCard {
+            run_id: "run-42".into(),
+            task: "review".into(),
+            class: "surprise".into(),
+            excerpt: "guard event circuit_breaker: 3 trips".into(),
+            run_link: "bb runs show run-42 --json".into(),
+            created_at: "2026-07-05T10:00:00+00:00".into(),
+            source: "moment:plane/.bb/moments.db".into(),
+        }];
+        let pack = build_pack(&window(), &[], &[], &[], &[], &[], &moments);
+
+        assert_eq!(pack.items.len(), 1);
+        let item = &pack.items[0];
+        assert_eq!(item.kind, "surprise");
+        assert_eq!(item.excerpt, "guard event circuit_breaker: 3 trips");
+        assert_eq!(item.ref_value("task:"), Some("review"));
+        assert_eq!(item.ref_value("run:"), Some("run-42"));
+        assert_eq!(item.ref_value("class:"), Some("surprise"));
+        assert!(item.source.starts_with("moment:"));
     }
 
     #[test]
@@ -475,7 +542,15 @@ mod tests {
             links: vec![],
             source: "feed:/d.jsonl".into(),
         }];
-        let pack = build_pack(&window(), &[], &card_movements, &bb_runs, &feed_events, &[]);
+        let pack = build_pack(
+            &window(),
+            &[],
+            &card_movements,
+            &bb_runs,
+            &feed_events,
+            &[],
+            &[],
+        );
         let kinds: Vec<&str> = pack.items.iter().map(|i| i.kind.as_str()).collect();
         assert_eq!(kinds, vec!["card-complete", "bb-run", "shipped"]);
     }
