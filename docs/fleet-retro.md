@@ -151,8 +151,8 @@ weekly run never overwrites the daily page underneath it -- the operator
 needs to read the last daily *and* the last weekly retro simultaneously
 (acceptance criterion 5), which requires both to persist side by side:
 
-- `https://bastion.tail5f5eb4.ts.net/artifacts/a/fleet-retro/daily/index.html`
-- `https://bastion.tail5f5eb4.ts.net/artifacts/a/fleet-retro/weekly/index.html`
+- `https://sanctum.tail5f5eb4.ts.net/artifacts/a/fleet-retro/daily/index.html`
+- `https://sanctum.tail5f5eb4.ts.net/artifacts/a/fleet-retro/weekly/index.html`
 
 Each run also writes `spec.json` (the assembled `RetroSpec`) and
 `evidence-pack.json` (the versioned `EvidencePack` the spec was assembled

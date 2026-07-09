@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::process::Command;
 
-/// Mirror `local_dir` to the bastion artifact shelf at
-/// `https://bastion.tail5f5eb4.ts.net/artifacts/a/<slug>/`, matching
+/// Mirror `local_dir` to the Sanctum artifact shelf at
+/// `https://sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/`, matching
 /// bridge.py's `publish_to_shelf`. Best-effort: a failed PUT is logged to
 /// stderr and does not fail the run, since the local `local_dir` output is
 /// canonical -- the shelf copy is delivery, not the source of truth. Returns
@@ -12,7 +12,7 @@ pub fn publish_to_shelf(slug: &str, local_dir: &Path) -> Option<String> {
         eprintln!("fleet-retro: ARTIFACTS_API_TOKEN not set; skipping shelf publish");
         return None;
     };
-    let base = format!("https://bastion.tail5f5eb4.ts.net/artifacts/a/{slug}");
+    let base = shelf_base(slug);
     let mut published_any = false;
     for entry in walk_files(local_dir) {
         let Ok(rel) = entry.strip_prefix(local_dir) else {
@@ -32,6 +32,10 @@ pub fn publish_to_shelf(slug: &str, local_dir: &Path) -> Option<String> {
         }
     }
     published_any.then(|| format!("{base}/index.html"))
+}
+
+fn shelf_base(slug: &str) -> String {
+    format!("https://sanctum.tail5f5eb4.ts.net/artifacts/a/{slug}")
 }
 
 fn walk_files(dir: &Path) -> Vec<std::path::PathBuf> {
@@ -126,6 +130,14 @@ mod tests {
         let files = walk_files(dir.path());
 
         assert_eq!(files.len(), 2);
+    }
+
+    #[test]
+    fn shelf_base_uses_the_canonical_sanctum_origin() {
+        assert_eq!(
+            shelf_base("fleet-retro/daily"),
+            "https://sanctum.tail5f5eb4.ts.net/artifacts/a/fleet-retro/daily"
+        );
     }
 
     #[test]
