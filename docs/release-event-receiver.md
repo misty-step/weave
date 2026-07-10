@@ -6,7 +6,7 @@ independent DigitalOcean service rather than a Bastion service. The legacy Fly
 app (`weave-release-events`) is retained only as rollback during the migration
 soak.
 It accepts release webhooks from GitHub Actions and stores them in append-only
-JSONL on the Fly volume so the Bridge feed can read them later.
+JSONL on durable block storage so the Bridge feed can read them later.
 
 ## HTTP Contract
 
@@ -48,7 +48,8 @@ Storage:
 
 - `RELEASE_EVENTS_ROOT` defaults to `/data/events`.
 - Events append to `/data/events/events.jsonl`.
-- The Fly volume is mounted at `/data`; redeploys must not replace it.
+- The production DigitalOcean block volume is mounted into the container at
+  `/data`; the retained Fly rollback volume uses the same mount contract.
 
 The provider-neutral container is built from the repo root:
 
