@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-const DEFAULT_BASE_URL: &str = "https://weave-release-events.fly.dev";
+const DEFAULT_BASE_URL: &str = "https://weave-release-events.mistystep.io";
 
 /// `RELEASE_EVENTS_READER_TOKEN` from the environment, falling back to
 /// `~/.secrets` (same pattern `fleet-retro`'s `secrets.rs` uses, and
@@ -85,5 +85,13 @@ mod tests {
     #[test]
     fn urlencode_leaves_safe_characters_untouched() {
         assert_eq!(urlencode("abc-DEF_123.~"), "abc-DEF_123.~");
+    }
+
+    #[test]
+    fn default_receiver_is_the_canonical_digitalocean_endpoint() {
+        assert_eq!(
+            DEFAULT_BASE_URL,
+            "https://weave-release-events.mistystep.io"
+        );
     }
 }

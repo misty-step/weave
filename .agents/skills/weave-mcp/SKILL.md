@@ -33,7 +33,7 @@ register `powder-mcp` or `bb --config <plane> mcp serve`.
 
 | Tool | Verb | Notes |
 |---|---|---|
-| `list_release_events` | query | Reads the deployed `apps/release-events` receiver's `GET /v1/events?since=` -- Landmark webhook + release-kit events. Requires `RELEASE_EVENTS_READER_TOKEN` (env or `~/.secrets`). |
+| `list_release_events` | query | Reads the canonical DigitalOcean `apps/release-events` receiver's `GET /v1/events?since=` -- Landmark webhook + release-kit events. Requires `RELEASE_EVENTS_READER_TOKEN` (env or `~/.secrets`). |
 | `run_fleet_retro` | trigger (dry-run only) | Assembles a fresh `RetroSpec` for `window: daily\|weekly\|custom` and returns it as JSON. Never publishes -- no shelf write, no feed post. Use for "what would today's/this week's/this window's retro look like right now." |
 | `get_latest_fleet_retro` | read | Reads the most recently *published* `spec.json` under `~/.factory-lanes/fleet-retro/` (optionally filtered to `daily`/`weekly`). Reflects the last real CLI/LaunchAgent run, not a fresh assembly. Use for "what did the last daily/weekly retro actually say." |
 
@@ -48,10 +48,10 @@ daily/weekly cadence, whatever ran last).
 back to `~/.secrets` -- required because an MCP client launched outside an
 interactively-sourced shell (a LaunchAgent, a fresh terminal, a remote
 sprite) does not inherit it. Never printed, never embedded in a tool result.
-If `list_release_events` errors with "not set", the token exists as a Fly
-secret on the deployed app (`flyctl secrets list -a weave-release-events`
-confirms the name) but has not been mirrored into this machine's
-`~/.secrets` -- that is an operator provisioning gap, not a code bug.
+If `list_release_events` errors with "not set", the reader token has not been
+mirrored into this machine's `~/.secrets` -- that is an operator provisioning
+gap, not a code bug. Provider secret inventories confirm names only and must
+never be used to print or copy values into a receipt.
 
 ## Related
 
