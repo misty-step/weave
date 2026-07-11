@@ -2,9 +2,8 @@
 
 Weave owns the public receiver for Landmark release events. The canonical
 receiver is `https://weave-release-events.mistystep.io`, running as an
-independent DigitalOcean service rather than a Bastion service. The legacy Fly
-app (`weave-release-events`) is retained only as rollback during the migration
-soak.
+independent DigitalOcean service rather than a Sanctum service. It is the only
+production receiver and the only supported recovery target.
 It accepts release webhooks from GitHub Actions and stores them in append-only
 JSONL on durable block storage so the Bridge feed can read them later.
 
@@ -49,7 +48,7 @@ Storage:
 - `RELEASE_EVENTS_ROOT` defaults to `/data/events`.
 - Events append to `/data/events/events.jsonl`.
 - The production DigitalOcean block volume is mounted into the container at
-  `/data`; the retained Fly rollback volume uses the same mount contract.
+  `/data`.
 
 The provider-neutral container is built from the repo root:
 
@@ -62,6 +61,11 @@ two required secrets through a root-owned environment file, runs the container
 under a supervisor, and terminates TLS in front of localhost port 8080. Restore
 `/data/events/events.jsonl` byte-for-byte; do not normalize historical rows.
 
-`fly.toml` is the bounded rollback manifest until the DigitalOcean soak and
-destructive retirement review are complete. It is not the canonical deploy
-target.
+This repo intentionally carries no provider-specific rollback manifest. Recover
+by rebuilding the same container, attaching a restored copy of the DigitalOcean
+block volume at `/data`, and verifying the canonical health route before
+re-enabling webhook delivery:
+
+```sh
+curl -fsS https://weave-release-events.mistystep.io/healthz
+```
