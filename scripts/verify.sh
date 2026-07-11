@@ -93,7 +93,7 @@ echo "  OK    no forbidden content found"
 echo "==> Validating fixtures against schemas"
 
 mkdir -p "$CACHE_DIR"
-if ! NODE_PATH="$CACHE_DIR/node_modules" node -e "require('ajv/dist/2020'); require('ajv-formats')" >/dev/null 2>&1; then
+if ! NODE_PATH="$CACHE_DIR/node_modules" node -e "require('ajv/dist/2020'); require('ajv-formats'); process.exit(require('ajv/package.json').version === '8.17.1' && require('ajv-formats/package.json').version === '3.0.1' ? 0 : 1)" >/dev/null 2>&1; then
   echo "  Installing ajv (cached at $CACHE_DIR)..."
   (cd "$CACHE_DIR" && npm init -y --silent >/dev/null 2>&1 && npm install --silent ajv@8.17.1 ajv-formats@3.0.1 >/dev/null 2>&1)
 fi
