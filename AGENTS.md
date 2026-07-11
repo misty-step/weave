@@ -26,7 +26,7 @@ themselves are still hardened standalone in their own repos.
 - `docs/*.md` — composition contracts, seam reference, onboarding,
   SDLC-organ promotion criteria, doc-sync flow.
 - `apps/release-events/` — public Landmark release-event receiver for the
-  Bridge feed, deployed as its own Fly app.
+  Bridge feed, deployed as an independent DigitalOcean service.
 - `apps/fleet-retro/` — daily/weekly/arbitrary-window agent-activity retro
   generator; see `docs/fleet-retro.md`.
 - `apps/weave-mcp/` — read-only MCP server over fleet-retro and
