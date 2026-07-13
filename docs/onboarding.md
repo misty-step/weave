@@ -87,6 +87,6 @@ elicitation payload.
 
 ## 9. The backlog
 
-Read [backlog.d/](../backlog.d/). Each file is a ticket with a goal, an oracle
+Read the Weave project in deployed Powder. Each card has a goal and an oracle
 (checkable acceptance criteria), and notes. Pick an unblocked ticket and work
 it.

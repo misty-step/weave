@@ -2,7 +2,7 @@
 
 Status: draft
 Date: 2026-07-01
-Backlog: `backlog.d/006-ci-auditor-flow.md`
+Work item: Powder card `weave-006`
 
 The CI/quality-gate auditor is a BB-triggered maintenance loop that audits
 each repo's CI design, quality gates, tests, linter, and build for

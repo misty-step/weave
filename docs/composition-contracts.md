@@ -2,7 +2,7 @@
 
 Status: draft
 Date: 2026-07-01
-Backlog: `backlog.d/001-composition-contracts.md`
+Work item: Powder card `weave-001`
 
 This document names the seams between the current Weave pieces. It is not an
 implementation schema registry yet. It is the contract map that tells each

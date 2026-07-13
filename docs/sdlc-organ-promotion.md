@@ -2,7 +2,7 @@
 
 Status: draft
 Date: 2026-07-01
-Backlog: `backlog.d/004-sdlc-organ-promotion-criteria.md`
+Work item: Powder card `weave-004`
 
 This document defines the measurable bar an agent-config-with-responsibility
 must clear before it graduates from a Bitterblossom workload to a first-class

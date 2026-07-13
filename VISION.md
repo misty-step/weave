@@ -60,4 +60,4 @@ canary incident ◀── deploy ◀── merge ◀── cerberus review (advi
 ## Status
 
 Composition spec + contracts + cross-cutting backlog live here. The pieces are being
-hardened standalone first (see backlog.d/); the composition layer follows.
+hardened standalone first (see Powder); the composition layer follows.

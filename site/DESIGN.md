@@ -22,7 +22,7 @@ inventing a second design system.
 - Icon: `layers`
 - Reason: selected 2026-07-02 through the fleet-wide icon-logo playground
   (`aesthetic/prototypes/icon-logo-playground.html`) and ratified in
-  `backlog.d/016-adopt-lucide-layers-as-the-weave-wordmark-icon.md` — the
+  Powder card `weave-016` — the
   fabric, the composition of agent-first dev tools, the loop, the stitching.
 - Rule: the mark is an inline Lucide SVG inside `.ae-app-mark`. No bespoke
   marks, logo images, emoji marks, or colored wordmarks.
