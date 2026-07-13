@@ -2,7 +2,7 @@
 
 Status: recommendation pending operator decision
 Date: 2026-07-01
-Backlog: `backlog.d/002-remote-and-review-primitive-research.md`
+Work item: Powder card `weave-002`
 
 ## Recommendation
 

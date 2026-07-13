@@ -2,7 +2,7 @@
 
 Status: draft
 Date: 2026-07-01
-Backlog: `backlog.d/005-doc-sync-flow.md`
+Work item: Powder card `weave-005`
 
 The doc-sync agent is a BB-triggered maintenance loop that keeps each managed
 repo's documentation accurate using the harness-kit document skill with an

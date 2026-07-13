@@ -18,7 +18,7 @@ docs/
   sdlc-organ-promotion.md       — organ promotion bar
   schemas/                      — JSON Schemas owned by weave
   fixtures/contracts/           — valid and invalid contract fixtures
-backlog.d/                      — one file per ticket
+Powder                         — work ledger, outside the repository
 ```
 
 ## What lives here vs. in the piece repos
@@ -75,10 +75,11 @@ See [composition contracts](docs/composition-contracts.md) for the full rules.
 - Schemas MUST NOT carry secrets, private instance data, local paths, or
   tailnet-only hostnames.
 
-## Adding a backlog ticket
+## Adding a Powder card
 
-Create a file in `backlog.d/` named `NNN-short-slug.md` where `NNN` is the next
-free number. Include:
+Create or update a card in deployed Powder under `repo=weave`; never create a
+repository-local ticket file. Use an identifier such as `weave-NNN`, where
+`NNN` is an available number. Include:
 
 ```markdown
 # Title

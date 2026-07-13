@@ -31,6 +31,6 @@ themselves are still hardened standalone in their own repos.
   generator; see `docs/fleet-retro.md`.
 - `apps/weave-mcp/` — read-only MCP server over fleet-retro and
   release-events; see `.agents/skills/weave-mcp/SKILL.md`.
-- `backlog.d/` — numbered backlog items driving this repo's own work.
+- Deployed Powder (`repo=weave`) — the sole work ledger for this repo.
 
 Repo-local skills: `.agents/skills/weave-mcp/`.
