@@ -138,11 +138,23 @@ cargo run --release -p weave-fleet-retro -- --window weekly
 cargo run --release -p weave-fleet-retro -- --scheduled
 ```
 
-`POWDER_API_BASE_URL`/`POWDER_API_KEY`/`ARTIFACTS_API_TOKEN` are read from
-the environment first, falling back to `~/.secrets` (`src/secrets.rs`) --
-required because the LaunchAgent-scheduled run does not inherit an
-interactively-sourced shell environment. Never printed, never embedded in
-generated output.
+`POWDER_API_BASE_URL`/`POWDER_API_KEY` are read from the environment first,
+falling back to `~/.secrets` (`src/secrets.rs`) -- required because the
+LaunchAgent-scheduled run does not inherit an interactively-sourced shell
+environment. Never printed, never embedded in generated output.
+
+Shelf publishing (`src/publish.rs`) holds no raw artifact-shelf credential:
+it reads `MINT_BASE_URL` as plain non-secret configuration (env only, no
+`~/.secrets` fallback -- Mint's own tailnet-reachable origin, not a secret)
+and uploads each file through Mint's generic HTTPS proxy
+(`${MINT_BASE_URL}/proxy/https/sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/<path>`),
+sending only the harmless placeholder bearer `__mint.artifacts.default__`;
+Mint resolves the real shelf token from `secret://artifacts/default` and
+injects it inside its own broker process. A missing or invalid
+`MINT_BASE_URL` is best-effort -- the publish step is skipped with a stderr
+notice, and the run does not fail. The public URLs returned and posted to
+the feed are unaffected by this: they remain the direct
+`https://sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/index.html` links.
 
 ## Published locations
 
