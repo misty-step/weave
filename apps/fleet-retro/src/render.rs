@@ -419,14 +419,14 @@ mod tests {
                 narrative: Narrative {
                     heading: "What mattered".into(),
                     status: NarrativeStatus::Unavailable {
-                        reason: "OPENROUTER_API_KEY not configured; skipped".into(),
+                        reason: "MINT_BASE_URL not configured; skipped".into(),
                     },
                 },
                 citations: vec![],
             },
         );
         let html = render_html(&spec);
-        assert!(!html.contains("OPENROUTER_API_KEY"));
+        assert!(!html.contains("MINT_BASE_URL"));
         assert!(html.contains("Narrative synthesis unavailable this run."));
     }
 

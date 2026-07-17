@@ -87,23 +87,33 @@ pub trait SynthesisClient {
     fn complete(&self, model: &str, prompt: &str) -> Result<String>;
 }
 
-/// Real OpenRouter chat-completions client. `OPENROUTER_API_KEY` is read via
-/// env (falling back to `~/.secrets`, matching every other credential this
-/// crate reads) -- never logged, never embedded in generated output.
+/// Real OpenRouter chat-completions client. The caller holds only Mint's
+/// non-secret base URL and a fixed value-free placeholder. Mint resolves and
+/// injects the real OpenRouter credential inside the broker process.
 pub struct OpenRouterClient {
-    api_key: String,
+    endpoint: String,
+}
+
+const MINT_OPENROUTER_BEARER: &str = "Bearer __mint.openrouter.default__";
+
+fn mint_openrouter_url(mint_base: &str) -> Option<String> {
+    let base = mint_base.trim().trim_end_matches('/');
+    if base.is_empty() || !(base.starts_with("http://") || base.starts_with("https://")) {
+        return None;
+    }
+    Some(format!(
+        "{base}/proxy/https/openrouter.ai/api/v1/chat/completions"
+    ))
 }
 
 impl OpenRouterClient {
-    /// `None` when unconfigured, not an error -- a retro run without an
-    /// OpenRouter key is a fail-open case (deterministic tables-only report
-    /// with a visible banner), not a hard failure of the whole generator.
+    /// `None` when Mint is unconfigured, not an error -- synthesis remains a
+    /// fail-open enhancement rather than a hard dependency of report generation.
     pub fn from_env() -> Option<Self> {
-        let api_key = crate::secrets::env_or_secrets_file("OPENROUTER_API_KEY")?;
-        if api_key.trim().is_empty() {
-            return None;
-        }
-        Some(Self { api_key })
+        let mint_base = std::env::var("MINT_BASE_URL").ok()?;
+        Some(Self {
+            endpoint: mint_openrouter_url(&mint_base)?,
+        })
     }
 }
 
@@ -114,11 +124,11 @@ impl SynthesisClient for OpenRouterClient {
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.2,
         });
-        let response = ureq::post("https://openrouter.ai/api/v1/chat/completions")
-            .set("Authorization", &format!("Bearer {}", self.api_key))
+        let response = ureq::post(&self.endpoint)
+            .set("Authorization", MINT_OPENROUTER_BEARER)
             .set("Content-Type", "application/json")
             .send_json(body)
-            .context("OpenRouter chat-completions request failed")?;
+            .context("Mint-brokered OpenRouter chat-completions request failed")?;
         let value: serde_json::Value = response
             .into_json()
             .context("OpenRouter response was not valid JSON")?;
@@ -306,6 +316,15 @@ mod tests {
     use crate::pack::{EvidenceItem, EvidencePack, PackWindow};
     use std::cell::RefCell;
 
+    #[test]
+    fn openrouter_endpoint_is_always_mint_brokered() {
+        assert_eq!(
+            mint_openrouter_url("http://mint.internal:4949/").as_deref(),
+            Some("http://mint.internal:4949/proxy/https/openrouter.ai/api/v1/chat/completions")
+        );
+        assert_eq!(mint_openrouter_url(""), None);
+        assert_eq!(mint_openrouter_url("openrouter.ai"), None);
+    }
     fn pack_with_one_item() -> EvidencePack {
         EvidencePack {
             schema_version: "weave.evidence-pack.v1".to_string(),

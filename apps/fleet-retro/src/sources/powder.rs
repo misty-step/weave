@@ -32,12 +32,11 @@ pub struct PowderClient {
 }
 
 impl PowderClient {
-    /// Reads env first, falling back to `~/.secrets` (see `crate::secrets`)
-    /// so the LaunchAgent-scheduled run -- which does not inherit the
-    /// interactive shell's sourced `~/.secrets` -- still finds these.
+    /// Reads explicit, value-free LaunchAgent configuration only. The API key
+    /// is a Mint placeholder, never the real Powder credential.
     pub fn from_env() -> Option<Self> {
-        let base_url = crate::secrets::env_or_secrets_file("POWDER_API_BASE_URL")?;
-        let api_key = crate::secrets::env_or_secrets_file("POWDER_API_KEY")?;
+        let base_url = std::env::var("POWDER_API_BASE_URL").ok()?;
+        let api_key = std::env::var("POWDER_API_KEY").ok()?;
         if base_url.trim().is_empty() || api_key.trim().is_empty() {
             return None;
         }
@@ -349,11 +348,6 @@ mod tests {
         assert!(summary.starts_with("commented: "));
     }
 
-    // `PowderClient::from_env`'s "unconfigured" fallback behavior is
-    // `crate::secrets::env_or_secrets_file`'s behavior, already covered by
-    // that module's own hermetic tests (isolated HOME, no real filesystem
-    // dependency). Re-testing it here would mean mutating the same
-    // process-global `HOME`/env vars this module's own machine might have
-    // real Powder credentials in -- exactly the kind of global-state test
-    // that races with itself under `cargo test`'s default parallelism.
+    // Configuration is supplied explicitly by the scheduled job. Live
+    // cutover proof covers the value-free Mint endpoint and placeholder.
 }

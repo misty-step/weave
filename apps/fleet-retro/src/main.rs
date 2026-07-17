@@ -3,7 +3,6 @@ mod citation_gate;
 mod pack;
 mod publish;
 mod render;
-mod secrets;
 mod sources;
 mod spec;
 mod synthesis;
@@ -335,7 +334,7 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
     // Cheap-default/escalate-on-failure model routing, bounded retries, and
     // fail-open to a deterministic tables-only report are all inside
     // `synthesis::synthesize` -- this call site only decides WHETHER to
-    // attempt synthesis at all (`--no-synthesis`, or no OpenRouter key
+    // attempt synthesis at all (`--no-synthesis`, or no Mint base URL
     // configured, both degrade to the same fail-open shape `synthesize`
     // itself produces on exhausted attempts).
     let (narrative, citations, judge, gate_status) = if cli.no_synthesis {
@@ -365,12 +364,12 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
                 Narrative {
                     heading: synthesis::NARRATIVE_HEADING.to_string(),
                     status: NarrativeStatus::Unavailable {
-                        reason: "OPENROUTER_API_KEY not configured; skipped".to_string(),
+                        reason: "MINT_BASE_URL not configured; skipped".to_string(),
                     },
                 },
                 Vec::new(),
                 "none".to_string(),
-                "fail-open: OPENROUTER_API_KEY not configured".to_string(),
+                "fail-open: MINT_BASE_URL not configured".to_string(),
             ),
         }
     };
