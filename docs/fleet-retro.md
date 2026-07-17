@@ -66,8 +66,8 @@ Live-verified (not just unit-tested): a real run against live fleet data
 produced a genuine fabricated citation on attempt 1, correctly rejected by
 the gate, then a legitimate gate-passing narrative on attempt 2 -- proving
 the escalation-before-failure routing end to end against a real model, not
-a scripted double. A second live run with `OPENROUTER_API_KEY` unset proved
-the fail-open path renders the deterministic tables-only report with the
+a scripted double. A second live run with synthesis deliberately unconfigured
+proved the fail-open path renders the deterministic tables-only report with the
 banner. See `~/.factory-lanes/campaign/weave-923-evidence/` for the captured
 HTML/evidence-pack artifacts from both runs.
 
@@ -138,22 +138,23 @@ cargo run --release -p weave-fleet-retro -- --window weekly
 cargo run --release -p weave-fleet-retro -- --scheduled
 ```
 
-`POWDER_API_BASE_URL`/`POWDER_API_KEY` are read from the environment first,
-falling back to `~/.secrets` (`src/secrets.rs`) -- required because the
-LaunchAgent-scheduled run does not inherit an interactively-sourced shell
-environment. Never printed, never embedded in generated output.
+`POWDER_API_BASE_URL` and `POWDER_API_KEY` are explicit, value-free process
+configuration. The scheduled job points the base URL at Mint's Powder proxy
+and supplies only `__mint.powder.default__`; fleet-retro never reads
+`~/.secrets` or receives Powder's real credential.
 
-Shelf publishing (`src/publish.rs`) holds no raw artifact-shelf credential:
-it reads `MINT_BASE_URL` as plain non-secret configuration (env only, no
-`~/.secrets` fallback -- Mint's own tailnet-reachable origin, not a secret)
-and uploads each file through Mint's generic HTTPS proxy
-(`${MINT_BASE_URL}/proxy/https/sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/<path>`),
-sending only the harmless placeholder bearer `__mint.artifacts.default__`;
-Mint resolves the real shelf token from `secret://artifacts/default` and
-injects it inside its own broker process. A missing or invalid
-`MINT_BASE_URL` is best-effort -- the publish step is skipped with a stderr
-notice, and the run does not fail. The public URLs returned and posted to
-the feed are unaffected by this: they remain the direct
+`MINT_BASE_URL` is Mint's plain tailnet-reachable origin, not a credential.
+Narrative synthesis posts to
+`${MINT_BASE_URL}/proxy/https/openrouter.ai/api/v1/chat/completions` with the
+fixed placeholder `__mint.openrouter.default__`. Shelf publishing
+(`src/publish.rs`) uploads each file through
+`${MINT_BASE_URL}/proxy/https/sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/<path>`
+with `__mint.artifacts.default__`. Mint resolves both real credentials and
+injects them inside its broker process.
+
+A missing or invalid `MINT_BASE_URL` remains best-effort: synthesis fails open
+to the deterministic report, shelf delivery is skipped, and the local report
+still succeeds. Public shelf URLs remain direct
 `https://sanctum.tail5f5eb4.ts.net/artifacts/a/<slug>/index.html` links.
 
 ## Published locations
