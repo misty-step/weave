@@ -54,8 +54,7 @@ pub fn publish_to_shelf(slug: &str, local_dir: &Path) -> Option<String> {
 fn mint_base_url() -> Option<String> {
     let raw = std::env::var("MINT_BASE_URL").ok()?;
     let trimmed = raw.trim().trim_end_matches('/');
-    if trimmed.is_empty() || !(trimmed.starts_with("http://") || trimmed.starts_with("https://"))
-    {
+    if trimmed.is_empty() || !(trimmed.starts_with("http://") || trimmed.starts_with("https://")) {
         return None;
     }
     Some(trimmed.to_string())
