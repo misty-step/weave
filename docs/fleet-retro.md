@@ -104,7 +104,7 @@ HTML/evidence-pack artifacts from both runs.
   (`spec.rs::validate`) -- a retro that can't name where a claim came from
   fails validation, it doesn't render silently.
 - **Explicit gaps, not silent omissions.** An unconfigured source (no
-  `--bb-plane`, no `POWDER_API_BASE_URL`) reports "not configured" as a
+  `--bb-plane`) reports "not configured" as a
   provenance note. A quiet repo (swept, zero commits) still gets a
   `repo-swept` pack item and an all-zero `RepoActivityRow`, not silent
   absence. This is what "accuracy beats coverage" means in the card: a
@@ -138,10 +138,11 @@ cargo run --release -p weave-fleet-retro -- --window weekly
 cargo run --release -p weave-fleet-retro -- --scheduled
 ```
 
-`POWDER_API_BASE_URL` and `POWDER_API_KEY` are explicit, value-free process
-configuration. The scheduled job points the base URL at Mint's Powder proxy
-and supplies only `__mint.powder.default__`; fleet-retro never reads
-`~/.secrets` or receives Powder's real credential.
+Powder is retired. Live runs ignore its former environment configuration and
+do not contact it. Historical card evidence remains supported in saved packs
+and reports. The old live `scripts/thread-drill.sh` now exits before any
+network or credential operation; offline contract replay remains available
+through `scripts/thread-replay.cjs`.
 
 `MINT_BASE_URL` is Mint's plain tailnet-reachable origin, not a credential.
 Narrative synthesis posts to

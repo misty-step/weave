@@ -16,7 +16,7 @@ use chrono::{DateTime, Utc};
 use clap::Parser;
 
 use glance_catalog::structural::{Narrative, NarrativeStatus};
-use sources::{SourceNote, bb, feed, git, moments, powder, receipts};
+use sources::{SourceNote, bb, feed, git, moments, receipts};
 use spec::Footer;
 use window::RetroWindow;
 
@@ -73,10 +73,6 @@ struct Cli {
     /// <bb-plane>/.bb/moments.db; skipped entirely without --bb-plane)
     #[arg(long, env = "FLEET_RETRO_MOMENTS_DB")]
     moments_db: Option<PathBuf>,
-
-    /// Max Powder cards to inspect for in-window movements
-    #[arg(long, default_value_t = 300)]
-    card_limit: u32,
 
     /// Skip the model synthesis stage entirely: always render the
     /// deterministic tables-only report, as if every synthesis attempt had
@@ -262,17 +258,13 @@ fn generate_and_publish(cli: &Cli, home: &std::path::Path, window: RetroWindow) 
         ));
     }
 
-    // --- Powder card movements ----------------------------------------------
-    let card_movements = match powder::PowderClient::from_env() {
-        Some(client) => powder::collect_card_movements(&client, &window, cli.card_limit),
-        None => {
-            notes.push(SourceNote::new(
-                "powder",
-                "POWDER_API_BASE_URL/POWDER_API_KEY not set; skipped".to_string(),
-            ));
-            Vec::new()
-        }
-    };
+    // Historical movements remain renderable from saved packs. Live runs
+    // never contact the retired ledger, including with legacy environment.
+    let card_movements = Vec::new();
+    notes.push(SourceNote::new(
+        "powder",
+        "Retired; live collection disabled",
+    ));
 
     // --- bb plane runs -------------------------------------------------------
     let bb_runs = bb::collect_bb_runs(cli.bb_plane.as_deref(), &window);
