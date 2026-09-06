@@ -1,8 +1,7 @@
 # Fleet retro
 
 `apps/fleet-retro` generates a retro over an arbitrary time window covering
-everything the fleet's agents did: git commits/PRs per repo, Powder card
-movements, Bitterblossom plane runs and moment-scorer anomaly cards, Bridge
+git commits/PRs per repo, Bitterblossom plane runs and moment-scorer anomaly cards, Bridge
 feed events, and campaign receipts. Every collector projects into a
 versioned `EvidencePack` (`src/pack.rs`, `weave.evidence-pack.v1` -- see the
 schema changelog), which a model synthesis stage (`src/synthesis.rs`) turns
@@ -12,6 +11,9 @@ narrative into a spec-first page spec (`src/spec.rs`) rendered by a
 deterministic HTML renderer (`src/render.rs`) styled with the Misty Step
 Aesthetic, then pushed to the bastion artifact shelf with a `kind=report`
 entry posted to the Bridge feed so it shows up at Sanctum → Bridge.
+
+Live Powder collection is retired. Historical card movements remain readable
+in saved evidence packs and reports.
 
 Built for weave-908 (operator directive 2026-07-04): a daily ~21:00 + weekly
 Sunday + arbitrary-window retro that "very clearly and accurately describes

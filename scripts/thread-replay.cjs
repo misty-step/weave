@@ -141,7 +141,7 @@ check(
   feedRow.payload.producer_contracts.some((contract) => contract.id === 'release-feed-receiver')
 );
 
-console.log('\nStubbed live hops:');
+console.log('\nArchived fixture limitations (historical; no live hops are expected):');
 for (const stub of manifest.stubs) {
   console.log(`  - ${stub}`);
 }
