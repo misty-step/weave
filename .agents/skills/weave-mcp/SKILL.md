@@ -12,12 +12,11 @@ description: |
 # weave-mcp
 
 `apps/weave-mcp` is a hand-rolled JSON-RPC 2.0 stdio MCP server (no external
-MCP SDK dependency -- same shape as `powder-mcp`, the fleet's reference
-implementation for MCP-over-existing-core). Read-only by design: every tool
-either queries an existing HTTP source, triggers a local non-publishing
+MCP SDK dependency). Read-only by design: every tool either queries an
+existing HTTP source, triggers a local non-publishing
 dry-run, or reads an already-published file off disk. No tool here writes to
-Powder, publishes to the bastion shelf, or posts to the Bridge feed --
-publication stays a CLI/LaunchAgent action.
+external work trackers, publishes to the bastion shelf, or posts to the
+Bridge feed -- publication stays a CLI/LaunchAgent action.
 
 ## Run it
 
@@ -26,8 +25,8 @@ cargo run --release -p weave-mcp
 ```
 
 Reads/writes JSON-RPC 2.0 request/response objects, one per line, over
-stdin/stdout. Register it with any MCP-capable client the same way you'd
-register `powder-mcp` or `bb --config <plane> mcp serve`.
+stdin/stdout. Register `cargo run --release -p weave-mcp` as a stdio server
+in the chosen MCP client's configuration.
 
 ## Tools
 
@@ -63,15 +62,13 @@ compiled default remains the canonical DigitalOcean receiver.
   from and triggers.
 - `docs/release-event-receiver.md` — the release-events receiver this MCP
   server queries.
-- Powder's `powder-mcp` (`crates/powder-mcp` in the powder repo) — the fleet
-  reference shape this server's JSON-RPC dispatch mirrors.
 
 ## Red lines
 
-- No tool here mutates Powder, publishes to the shelf, or posts to the
-  Bridge feed. If a future card wants MCP-driven publication, that needs its
+- No tool here mutates external work trackers, publishes to the shelf, or
+  posts to the Bridge feed. If a future request needs MCP-driven publication, that needs its
   own explicit operator sign-off and a new tool, not a flag on
   `run_fleet_retro` -- mirroring bitterblossom's MCP-dispatch-off-by-default
   caution.
-- Never print `RELEASE_EVENTS_READER_TOKEN`, `POWDER_API_KEY`, or
+- Never print `RELEASE_EVENTS_READER_TOKEN` or
   `ARTIFACTS_API_TOKEN` in a tool result, log line, or error message.

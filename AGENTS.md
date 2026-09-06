@@ -1,7 +1,7 @@
 # AGENTS.md — the Weave
 
 The Weave is the opinionated composition layer for the Misty Step
-agent-first toolchain: powder, bitterblossom, cerberus, crucible,
+agent-first toolchain: bitterblossom, cerberus, crucible,
 threshold, canary, landmark, harness-kit. See `VISION.md` for the loop
 these pieces compose into, and `docs/the-five-faces.md` for the
 functional-core-with-five-faces contract each piece is held to.
@@ -31,6 +31,8 @@ themselves are still hardened standalone in their own repos.
   generator; see `docs/fleet-retro.md`.
 - `apps/weave-mcp/` — read-only MCP server over fleet-retro and
   release-events; see `.agents/skills/weave-mcp/SKILL.md`.
-- Deployed Powder (`repo=weave`) — the sole work ledger for this repo.
+- Work proceeds ad hoc from current operator requests; no backlog ticket is
+  required. Check current ownership and keep results in the session or a
+  brief project note.
 
 Repo-local skills: `.agents/skills/weave-mcp/`.

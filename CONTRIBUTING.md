@@ -18,14 +18,13 @@ docs/
   sdlc-organ-promotion.md       — organ promotion bar
   schemas/                      — JSON Schemas owned by weave
   fixtures/contracts/           — valid and invalid contract fixtures
-Powder                         — work ledger, outside the repository
 ```
 
 ## What lives here vs. in the piece repos
 
 The Weave owns **composition contracts** and the **host-neutral event envelope**
 (`weave.remote_event.v1`). Piece repos own their own schemas and fixtures
-(`bb.*`, `cerberus.*`, `crucible.*`, `canary.*`, `landmark.*`, `powder.*`,
+(`bb.*`, `cerberus.*`, `crucible.*`, `canary.*`, `landmark.*`,
 `threshold.*`, `harness.*`).
 
 When you add or change a Weave-owned schema, the schema file, fixtures, and
@@ -59,8 +58,8 @@ that piece's repo — the Weave only references it in
    must pass; invalid-marker fixtures must be rejected). A breaking change
    (field rename, type change, removed required field) requires a new major
    version.
-6. **Open a PR.** One coherent slice per PR. Link the backlog ticket in the PR
-   body.
+6. **Open a PR.** One coherent slice per PR. State the current request and
+   link relevant context or evidence in the PR body; no ticket is required.
 
 ## Contract rules (summary)
 
@@ -75,29 +74,12 @@ See [composition contracts](docs/composition-contracts.md) for the full rules.
 - Schemas MUST NOT carry secrets, private instance data, local paths, or
   tailnet-only hostnames.
 
-## Adding a Powder card
+## Starting work
 
-Create or update a card in deployed Powder under `repo=weave`; never create a
-repository-local ticket file. Use an identifier such as `weave-NNN`, where
-`NNN` is an available number. Include:
-
-```markdown
-# Title
-
-Priority: P1|P2|P3 · Status: pending · Estimate: S|M|L
-
-## Goal
-One or two sentences on the desired outcome.
-
-## Oracle
-- [ ] Concrete, checkable acceptance criteria.
-
-## Notes
-Context, constraints, links to related tickets.
-```
-
-Update the ticket's `Status` as it moves through the lifecycle. When a ticket
-is done, leave it in place with `Status: done` — the backlog is the history.
+Work proceeds ad hoc from current operator requests. Check current sessions
+and handoffs for overlapping work. Keep the goal, scope, ownership, and proof
+in the current session or a brief project note. Saved ideas and old plans are
+context, not standing assignments; a backlog ticket is not required.
 
 ## Style
 
@@ -136,7 +118,7 @@ Merge order: bottom-up; rebase/restack upper PRs after each lower merge.
 
 ## What does not belong here
 
-- Implementation of piece repos (BB, Powder, Cerberus, etc.) — those have
+- Implementation of piece repos (BB, Cerberus, etc.) — those have
   their own repos.
 - Secrets, instance data, local paths, tailnet hostnames.
 - Aesthetic kit design work (operator-gated, lives in `~/Development/aesthetic`).
