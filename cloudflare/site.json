@@ -1,0 +1,8 @@
+{
+  "repo": "misty-step/weave",
+  "source_commit": "93cadc6c3c96a54b379b4877f5dc796354dea242",
+  "source_folder": "site",
+  "project_prefix": "weave",
+  "before_url": "https://misty-step.github.io/weave/",
+  "build_kind": "static"
+}
